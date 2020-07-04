@@ -1,0 +1,44 @@
+﻿<package>
+  <job id = "run">
+    <script language="JScript">
+/**
+ * @updated 2020/01/07
+ * @fileoverview Mock of GUI .exe file
+ * @fileencoding UTF-8[BOM, dos]
+ * @requirements wscript.exe/cscript.exe
+ * @license MIT
+ * @links https://github.com/tuckn/WshChildProcess
+ * @author Tuckn
+ * @email tuckn333+github@gmail.com
+ */
+var sh = WScript.CreateObject('WScript.Shell');
+var nonAutoClosing = 0;
+var btnOk = 0;
+var icoQuestion = 32;
+
+sh.Popup('Jest Mock Body', nonAutoClosing, 'Jest Mock Title', icoQuestion);
+
+WScript.Quit();
+    </script>
+  </job>
+  <job id = "autoQuit0">
+    <script language="JScript">
+var sh = WScript.CreateObject('WScript.Shell');
+var icoInfomaiton = 64;
+
+sh.Popup('To close after 3sec', 3, 'Jest Mock Title', icoInfomaiton);
+
+WScript.Quit(0);
+    </script>
+  </job>
+  <job id = "autoQuit1">
+    <script language="JScript">
+var sh = WScript.CreateObject('WScript.Shell');
+var icoExcl = 48;
+
+sh.Popup('To close after 3sec', 3, 'Jest Mock Title', icoExcl);
+
+WScript.Quit(1);
+    </script>
+  </job>
+</package>

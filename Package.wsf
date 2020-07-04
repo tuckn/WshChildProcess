@@ -1,0 +1,35 @@
+﻿<package>
+  <!-- dependencies -->
+  <resource id="WshJest">https://github.com/tuckn/WshJest.git</resource>
+  <resource id="WshProcess">https://github.com/tuckn/WshProcess.git</resource>
+
+  <!-- scripts: test -->
+  <job id = "test:ChildProcess">
+    <script language="JScript" src="./WshModules/WshProcess/dist/bundle.js"></script>
+    <script language="JScript" src="./src/ChildProcess.js"></script>
+    <script language="JScript" src="./WshModules/WshJest/dist/app.js"></script>
+    <script language="JScript" src="./src/ChildProcess.test.js"></script>
+  </job>
+
+  <!-- scripts: build -->
+  <job id = "./dist/module.js">
+    <script language="JScript" src="./src/ChildProcess.js"></script>
+  </job>
+  <job id = "./dist/bundle.js">
+    <script language="JScript" src="./WshModules/WshProcess/dist/bundle.js"></script>
+    <script language="JScript" src="./src/ChildProcess.js"></script>
+  </job>
+
+  <!-- scripts: test dist -->
+  <job id = "test:dist:module">
+    <script language="JScript" src="./WshModules/WshProcess/dist/bundle.js"></script>
+    <script language="JScript" src="./dist/module.js"></script>
+    <script language="JScript" src="./WshModules/WshJest/dist/app.js"></script>
+    <script language="JScript" src="./src/ChildProcess.test.js"></script>
+  </job>
+  <job id = "test:dist:bundle">
+    <script language="JScript" src="./dist/bundle.js"></script>
+    <script language="JScript" src="./WshModules/WshJest/dist/app.js"></script>
+    <script language="JScript" src="./src/ChildProcess.test.js"></script>
+  </job>
+</package>

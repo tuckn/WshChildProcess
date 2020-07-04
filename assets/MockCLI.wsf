@@ -1,0 +1,27 @@
+﻿<package>
+  <job id = "withErr">
+    <script language="JScript">
+/**
+ * @updated 2020/01/07
+ * @fileoverview Mock of CLI .exe file
+ * @fileencoding UTF-8[BOM, dos]
+ * @requirements wscript.exe/cscript.exe
+ * @license MIT
+ * @links https://github.com/tuckn/WshChildProcess
+ * @author Tuckn
+ * @email tuckn333+github@gmail.com
+ */
+WScript.Sleep(1000); // Imitate a processing
+WScript.StdOut.Write('StdOut Message');
+WScript.StdErr.Write('StdErr Message');
+WScript.Quit(1);
+    </script>
+  </job>
+  <job id = "nonErr">
+    <script language="JScript">
+WScript.Sleep(1000); // Imitate a processing
+WScript.StdOut.Write('StdOut Message');
+WScript.Quit(0);
+    </script>
+  </job>
+</package>

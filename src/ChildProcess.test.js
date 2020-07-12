@@ -179,21 +179,24 @@ describe('ChildProcess', function () {
       if (process.isAdmin()) {
         cmd = testCmd + ' -t ' + testName + '$ ' + TEST2_USER;
         exec(cmd, { runsAdmin: false });
+
+        process.exit(CD.runs.ok);
       }
 
-      process.exit();
+      process.exit(CD.runs.err);
     }
 
     var resultFile = path.join(os.tmpdir(), testName + '.log');
 
     if (includes(process.argv, TEST2_USER)) {
-      if (process.isAdmin()) {
+      if (!process.isAdmin()) {
         fs.writeFileSync(resultFile, 'Failed', { encoding: 'utf8' });
-      } else {
-        fs.writeFileSync(resultFile, 'Success', { encoding: 'utf8' });
+
+        process.exit(CD.runs.err);
       }
 
-      process.exit();
+      fs.writeFileSync(resultFile, 'Success', { encoding: 'utf8' });
+      process.exit(CD.runs.ok);
     }
 
     fse.removeSync(resultFile);
@@ -407,16 +410,18 @@ describe('ChildProcess', function () {
         // Saves the Stdout messages
         fs.writeFileSync(stdoutFile, stdObj.stdout, { encoding: 'utf8' });
         fs.writeFileSync(stderrFile, stdObj.stderr, { encoding: 'utf8' });
+
+        process.exit(CD.runs.ok);
       }
 
-      process.exit();
+      process.exit(CD.runs.err);
     }
 
     // Outputs Stdout messages
     if (includes(process.argv, TEST2_USER)) {
       console.info('StdOut Message');
       console.error('StdErr Message');
-      process.exit();
+      process.exit(CD.runs.ok);
     }
 
     // Confirms none Stdout files
@@ -490,7 +495,7 @@ describe('ChildProcess', function () {
     expect('TEST').toBe('PASSED');
   });
 
-  test('registTaskForExecutingHighWI', function () {
+  test('registerTaskForExecutingHighWIL', function () {
     expect('TEST').toBe('PASSED');
   });
 

@@ -37,7 +37,7 @@
   var child_process = Wsh.ChildProcess;
 
   /** @constant {string} */
-  var MODULE_TITLE = 'WshModeJs/ChildProcess.js';
+  var MODULE_TITLE = 'WshChildProcess/ChildProcess.js';
 
   var throwErrNonStr = function (functionName, typeErrVal) {
     util.throwTypeError('string', MODULE_TITLE, functionName, typeErrVal);
@@ -465,9 +465,13 @@
    *
    * var fse = Wsh.FileSystemExtra;
    * var assoc = fse.readJsonSync('D:\\sample.json');
-   * console.log(assoc.error);
-   * console.log(assoc.stdout);
-   * console.log(assoc.stderr);
+   * console.dir(assoc);
+   * // { "file": "C:\\Program Files\\Image Magick\\identify.exe",
+   * //   "args": ["-verbose", "D:\\test.png"],
+   * //   "options": { "winStyle": "hidden" },
+   * //   "error": false,
+   * //   "stdout": "....",
+   * //   "stderr": "" }
    * @function execFileViaJSON
    * @memberof Wsh.ChildProcess
    * @param {string} jsonPath - The JSON filepath

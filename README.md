@@ -66,7 +66,7 @@ This allows the following functions to be used in _.\MyScript.js_.
 
 ## Usage
 
-Now _.\MyScript.js_ (JScript ) can use the useful functions to handle file system.
+Now _.\MyScript.js_ (JScript) can use the useful functions to handle file system.
 for example,
 
 ```js
@@ -168,7 +168,7 @@ console.log('Closed the window of IrfanView');
 Many other functions are added.
 See the [documentation](https://docs.tuckn.net/WshChildProcess) for more details.
 
-And you can also use all functions of [tuckn/WshPolyfill](https://github.com/tuckn/WshPolyfill), [tuckn/WshUtil](https://github.com/tuckn/WshUtil), [tuckn/WshPath](https://github.com/tuckn/WshPath), [tuckn/WshFileSystem](https://github.com/tuckn/WshFileSystem), [tuckn/WshOS](https://github.com/tuckn/WshOS), [tuckn/WshFileSystem](https://github.com/tuckn/WshFileSystem). and [tuckn/WshProcess](https://github.com/tuckn/WshProcess).
+And you can also use all functions of [tuckn/WshPolyfill](https://github.com/tuckn/WshPolyfill), [tuckn/WshUtil](https://github.com/tuckn/WshUtil), [tuckn/WshPath](https://github.com/tuckn/WshPath), [tuckn/WshOS](https://github.com/tuckn/WshOS), [tuckn/WshFileSystem](https://github.com/tuckn/WshFileSystem) and [tuckn/WshProcess](https://github.com/tuckn/WshProcess).
 
 ## Documentation
 

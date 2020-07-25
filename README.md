@@ -37,7 +37,7 @@ or
 > git submodule add https://github.com/tuckn/WshChildProcess.git ./WshModules/WshChildProcess
 ```
 
-(3) Include _.\WshChildProcess\dist\bundle.js_ into your .wsf file.
+(3) Include _.\\WshChildProcess\\dist\\bundle.js_ into your .wsf file.
 For Example, if your file structure is
 
 ```console
@@ -62,12 +62,14 @@ The content of above _Run.wsf_ is
 ```
 
 I recommend this .wsf file encoding to be UTF-8 [BOM, CRLF].
-This allows the following functions to be used in _.\MyScript.js_.
+This allows the following functions to be used in _.\\MyScript.js_.
 
 ## Usage
 
-Now _.\MyScript.js_ (JScript) can use the useful functions to handle file system.
+Now _.\\MyScript.js_ (JScript) can use the useful functions to handle file system.
 for example,
+
+### splitCommand
 
 ```js
 var splitCommand = Wsh.ChildProcess.splitCommand; // Shorthand
@@ -88,8 +90,11 @@ splitCommand('mklink /D "filePath2" filePath1');
 //   argsStr: '/D "filePath2" filePath1' }
 ```
 
+### exec
+
+Use Case: DOS commands or CUI applications that do not require processing results.
+
 ```js
-// Use Case: DOS commands or CUI applications that do not require processing results
 var exec = Wsh.ChildProcess.exec; // Shorthand
 
 // Asynchronously create the directory
@@ -101,8 +106,11 @@ exec('mkdir "C:\\My Apps\\test"'); // OK
 exec('mklink D:\\Temp\\hoge-Symlink "C:\\My Foo\\hoge"', { runsAdmin: true });
 ```
 
+### execFile
+
+Use Case: Applications that do not require processing results.
+
 ```js
-// Use Case: Applications that do not require processing results
 var execFile = Wsh.ChildProcess.execFile; // Shorthand
 
 // Asynchronously run Notepad with active window
@@ -121,8 +129,11 @@ execFile('mkdir', ['C:\\Tuckn\\test']); // Error
 execFile('mkdir', ['C:\\Tuckn\\test'], { shell: true }); // OK!
 ```
 
+### execSync
+
+Use Case: DOS commands or CUI applications that require processing results.
+
 ```js
-// Use Case: DOS commands or CUI applications that require processing results
 var execSync = Wsh.ChildProcess.execSync; // Shorthand
 
 var retObj = execSync('dir /A:H /B "C:\\Users"');
@@ -143,8 +154,11 @@ console.dir(retObj);
 //   stderr: "" }
 ```
 
+### execFileSync
+
+Use Case: Applications that require processing results.
+
 ```js
-// Use Case: Applications that require processing results
 var execFileSync = Wsh.ChildProcess.execFileSync; // Shorthand
 
 var retObj = execFileSync('net.exe',
@@ -161,14 +175,38 @@ execFileSync('C:\\Program Files\\IrfanView\\i_view64.exe', ['C:\\result.png']);
 // Run IrfanView with active window.
 // and this JS process is stopping until you close the window.
 console.log('Closed the window of IrfanView');
-
-// and so on...
 ```
+
+### Option dry-run
+
+No execute, returns the string of command.
+
+```js
+var execFileSync = Wsh.ChildProcess.execFileSync; // Shorthand
+
+var log = execFileSync('net.exe',
+ ['use', '\\\\CompName\\IPC$', 'mY& p@ss>_<', '/user:Tuckn'],
+ { isDryRun: true }
+);
+console.log(log);
+// Outputs:
+// dry-run [_shRun]: C:\Windows\System32\cmd.exe /S /C"net.exe use \\CompName\IPC$ "mY^& p@ss^>_^<" /user:Tuckn 1> C:\%TMP%\stdout.log 2> C:\%TMP%\stderr.log"
+```
+
 
 Many other functions are added.
 See the [documentation](https://docs.tuckn.net/WshChildProcess) for more details.
 
-And you can also use all functions of [tuckn/WshPolyfill](https://github.com/tuckn/WshPolyfill), [tuckn/WshUtil](https://github.com/tuckn/WshUtil), [tuckn/WshPath](https://github.com/tuckn/WshPath), [tuckn/WshOS](https://github.com/tuckn/WshOS), [tuckn/WshFileSystem](https://github.com/tuckn/WshFileSystem) and [tuckn/WshProcess](https://github.com/tuckn/WshProcess).
+### Dependency Modules
+
+You can also use the following useful functions in _.\\MyScript.js_ (JScript).
+
+- [tuckn/WshPolyfill](https://github.com/tuckn/WshPolyfill)
+- [tuckn/WshUtil](https://github.com/tuckn/WshUtil)
+- [tuckn/WshPath](https://github.com/tuckn/WshPath)
+- [tuckn/WshOS](https://github.com/tuckn/WshOS)
+- [tuckn/WshFileSystem](https://github.com/tuckn/WshFileSystem)
+- [tuckn/WshProcess](https://github.com/tuckn/WshProcess)
 
 ## Documentation
 

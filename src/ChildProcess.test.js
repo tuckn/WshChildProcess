@@ -558,7 +558,7 @@ describe('ChildProcess', function () {
 
   test('spawnSync', function () {
     var spawnSync = child_process.spawnSync;
-    expect('TEST').toBe('PASSED');
+    expect('@TODO').toBe('TEST');
 
     noneStrVals.forEach(function (val) {
       expect(_cb(spawnSync, val)).toThrowError();
@@ -566,22 +566,22 @@ describe('ChildProcess', function () {
   });
 
   test('execFileViaJSON', function () {
-    expect('TEST').toBe('PASSED');
+    expect('@TODO').toBe('TEST');
   });
 
   test('isRunningAsAdmin', function () {
-    expect('TEST').toBe('PASSED');
+    expect('@TODO').toBe('TEST');
   });
 
   test('writeProcessPropsToJson', function () {
-    expect('TEST').toBe('PASSED');
+    expect('@TODO').toBe('TEST');
   });
 
   test('registerTaskForExecutingHighWIL', function () {
-    expect('TEST').toBe('PASSED');
+    expect('@TODO').toBe('TEST');
   });
 
   test('setExePath', function () {
-    expect('TEST').toBe('PASSED');
+    expect('@TODO').toBe('TEST');
   });
 });

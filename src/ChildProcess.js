@@ -198,7 +198,7 @@
    * @param {boolean} [options.shell=true] - Wrap with CMD.EXE
    * @param {(number|string)} [options.winStyle='hidden'] - See {@link https://docs.tuckn.net/WshUtil/Wsh.Constants.windowStyles.html|Wsh.Constants.windowStyles}.
    * @param {boolean} [options.isDryRun=false] - No execute, returns the string of command.
-   * @returns {(0|void|string)} - 0 or undefined. If isDryRun is true, returns string.
+   * @returns {(0|void|string)} - 0 or undefined. If options.isDryRun is true, returns string.
    */
   child_process.exec = function (command, options) {
     var FN = 'child_process.exec';
@@ -250,7 +250,7 @@
    * @param {(number|string)} [options.winStyle='activeDef'] - See {@link https://docs.tuckn.net/WshUtil/Wsh.Constants.windowStyles.html|Wsh.Constants.windowStyles}.
    * @param {boolean} [options.shell=false] - Wrap with CMD.EXE
    * @param {boolean} [options.isDryRun=false] - No execute, returns the string of command.
-   * @returns {(0|void|string)} - 0 or undefined. If isDryRun is true, returns string.
+   * @returns {(0|void|string)} - 0 or undefined. If options.isDryRun is true, returns string.
    */
   child_process.execFile = function (file, args, options) {
     var FN = 'child_process.execFile';
@@ -395,7 +395,7 @@
    * @param {boolean} [options.shell=false] - Wrap with CMD.EXE
    * @param {(number|string)} [options.winStyle='hidden'] - See {@link https://docs.tuckn.net/WshUtil/Wsh.Constants.windowStyles.html|Wsh.Constants.windowStyles}.
    * @param {boolean} [options.isDryRun=false] - No execute, returns the string of command.
-   * @returns {typeRunSyncReturn|string} - If isDryRun is true, returns string.
+   * @returns {typeRunSyncReturn|string} - If options.isDryRun is true, returns string.
    */
   child_process.execSync = function (command, options) {
     var FN = 'child_process.execSync';
@@ -450,7 +450,7 @@
    * @param {(number|string)} [options.winStyle='activeDef'] - See {@link https://docs.tuckn.net/WshUtil/Wsh.Constants.windowStyles.html|Wsh.Constants.windowStyles}.
    * @param {boolean} [options.shell=false] - Wrap with CMD.EXE
    * @param {boolean} [options.isDryRun=false] - No execute, returns the string of command.
-   * @returns {typeRunSyncReturn|string} - If isDryRun is true, returns string.
+   * @returns {typeRunSyncReturn|string} - If options.isDryRun is true, returns string.
    */
   child_process.execFileSync = function (file, args, options) {
     var FN = 'child_process.execFileSync';

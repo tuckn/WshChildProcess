@@ -102,7 +102,7 @@ exec('mkdir C:\\Tuckn\\test');
 exec('mkdir C:\\My Apps\\test'); // NG
 exec('mkdir "C:\\My Apps\\test"'); // OK
 
-// Asynchronously create the symbolick-link in D:\Temp
+// Asynchronously create the symbolic-link in D:\Temp
 exec('mklink D:\\Temp\\hoge-Symlink "C:\\My Foo\\hoge"', { runsAdmin: true });
 ```
 
@@ -117,12 +117,12 @@ var execFile = Wsh.ChildProcess.execFile; // Shorthand
 execFile('notepad.exe');
 execFile('notepad.exe', ['D:\\memo.txt'], { winStyle: 'activeMax' });
 
-// Arguments will be parsed
-// 'mY& p@ss>_<' to '"mY^& p@ss^>_^<"'
+// Auto parse arg
 execFile('net.exe',
-  ['use', '\\\\CompName\\IPC$', 'mY& p@ss>_<', '/user:Tuckn'],
+  ['use', '\\\\CompName\\My Dir', 'mY&p@ss>_<', '/user:Tuckn'],
   { winStyle: 'hidden' }
 );
+// parsed the args to 'use "\\\\CompName\\My Dir" mY^&p@ss^>_^< /user:Tuckn'
 
 // DOS commands
 execFile('mkdir', ['C:\\Tuckn\\test']); // Error
@@ -162,7 +162,7 @@ Use Case: Applications that require processing results.
 var execFileSync = Wsh.ChildProcess.execFileSync; // Shorthand
 
 var retObj = execFileSync('net.exe',
-  ['use', '\\\\CompName\\IPC$', 'mY& p@ss>_<', '/user:Tuckn'],
+  ['use', '\\\\CompName\\IPC$', 'mY&p@ss>_<', '/user:Tuckn'],
   { winStyle: 'hidden' }
 );
 console.dir(retObj);
@@ -185,12 +185,12 @@ No execute, returns the string of command.
 var execFileSync = Wsh.ChildProcess.execFileSync; // Shorthand
 
 var log = execFileSync('net.exe',
- ['use', '\\\\CompName\\IPC$', 'mY& p@ss>_<', '/user:Tuckn'],
+ ['use', '\\\\CompName\\IPC$', 'mY&p@ss>_<', '/user:Tuckn'],
  { isDryRun: true }
 );
 console.log(log);
 // Outputs:
-// dry-run [_shRun]: C:\Windows\System32\cmd.exe /S /C"net.exe use \\CompName\IPC$ "mY^& p@ss^>_^<" /user:Tuckn 1> C:\%TMP%\stdout.log 2> C:\%TMP%\stderr.log"
+// dry-run [_shRun]: C:\Windows\System32\cmd.exe /S /C"net.exe use \\CompName\IPC$ mY^&p@ss^>_^< /user:Tuckn 1> C:\%TMP%\stdout.log 2> C:\%TMP%\stderr.log"
 ```
 
 

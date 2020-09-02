@@ -45,7 +45,7 @@
 
   // child_process.splitCommand {{{
   /**
-   * @typedef {object} typeSpliteCommandReturn
+   * @typedef {object} typesplitCommandReturn
    * @property {string} mainCmd - The main command part.
    * @property {string} argsStr - The arguments part.
    */
@@ -73,7 +73,7 @@
    * @function splitCommand
    * @memberof Wsh.ChildProcess
    * @param {string} command - The command to split.
-   * @returns {typeSpliteCommandReturn} - { mainCmd, argsStr }
+   * @returns {typesplitCommandReturn} - { mainCmd, argsStr }
    */
   child_process.splitCommand = function (command) {
     var FN = 'child_process.splitCommand';
@@ -167,7 +167,7 @@
    * exec('mkdir C:\\My Apps\\test'); // NG
    * exec('mkdir "C:\\My Apps\\test"'); // OK
    *
-   * // Asynchronously create the symbolick-link in D:\Temp
+   * // Asynchronously create the symbolic-link in D:\Temp
    * exec('mklink D:\\Temp\\hoge-Symlink "C:\\My Foo\\hoge"', { runsAdmin: true });
    *
    * // Note: Asynchronous behavior
@@ -633,14 +633,14 @@
     return fse.writeJsonSync(jsonPath, os.getProcessObj(processName));
   }; // }}}
 
-  // child_process.registTaskForExecutingHighWIL {{{
+  // child_process.registerTaskForExecutingHighWIL {{{
   /**
    * [W.I.P] @todo Registers the command in Task Scheduler to execute with administrator authority.
    *
-   * @function registTaskForExecutingHighWIL
+   * @function registerTaskForExecutingHighWIL
    * @memberof Wsh.ChildProcess
    */
-  child_process.registTaskForExecutingHighWIL = function () {
+  child_process.registerTaskForExecutingHighWIL = function () {
     // @TODO
   }; // }}}
 

@@ -9,7 +9,7 @@
  * @license MIT
  * @links https://github.com/tuckn/WshChildProcess
  * @author Tuckn
- * @email tuckn333+github@gmail.com
+ * @email tuckn333@gmail.com
  */
 var sh = WScript.CreateObject('WScript.Shell');
 var nonAutoClosing = 0;

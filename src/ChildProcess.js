@@ -392,7 +392,7 @@
    * @param {string} command - The executable file path or the command of CMD.
    * @param {object} [options] - Optional parameters.
    * @param {(boolean|undefined)} [options.runsAdmin] - true: as Admin, false: as User
-   * @param {boolean} [options.shell=false] - Wrap with CMD.EXE
+   * @param {boolean} [options.shell=true] - Wrap with CMD.EXE
    * @param {(number|string)} [options.winStyle='hidden'] - See {@link https://docs.tuckn.net/WshUtil/Wsh.Constants.windowStyles.html|Wsh.Constants.windowStyles}.
    * @param {boolean} [options.isDryRun=false] - No execute, returns the string of command.
    * @returns {typeRunSyncReturn|string} - If options.isDryRun is true, returns string.
@@ -447,8 +447,8 @@
    * @param {string[]} [args]
    * @param {object} [options] - Optional parameters.
    * @param {(boolean|undefined)} [options.runsAdmin] - true: as Admin, false: as User
+   * @param {boolean} [options.shell=true] - Wrap with CMD.EXE. @TODO If the option `shell` is `false`, to get stdout. The default in Node.js execFileSync is false.
    * @param {(number|string)} [options.winStyle='activeDef'] - See {@link https://docs.tuckn.net/WshUtil/Wsh.Constants.windowStyles.html|Wsh.Constants.windowStyles}.
-   * @param {boolean} [options.shell=false] - Wrap with CMD.EXE
    * @param {boolean} [options.isDryRun=false] - No execute, returns the string of command.
    * @returns {typeRunSyncReturn|string} - If options.isDryRun is true, returns string.
    */
@@ -457,7 +457,6 @@
     if (!isSolidString(file)) throwErrNonStr(FN, file);
     if (!isSolidArray(args)) args = [];
 
-    // @todo If `shell` is `false` to get stdout,  (It's Node.js spec)
     return _runSync(
       file,
       args,

@@ -2,7 +2,7 @@
   "name": "@tuckn/WshChildProcess",
   "description": "This module provides the ability to spawn child processes (similar to Node.js Child-Process).",
   "version": "1.1.1",
-  "author": "Tuckn <tuckn333+github@gmail.com>",
+  "author": "Tuckn <tuckn333@gmail.com>",
   "private": false,
   "license": "MIT",
   "homepage": "https://docs.tuckn.net/WshChildProcess",

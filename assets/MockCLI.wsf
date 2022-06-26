@@ -9,7 +9,7 @@
  * @license MIT
  * @links https://github.com/tuckn/WshChildProcess
  * @author Tuckn
- * @email tuckn333+github@gmail.com
+ * @email tuckn333@gmail.com
  */
 WScript.Sleep(1000); // Imitate a processing
 WScript.StdOut.Write('StdOut Message');

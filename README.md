@@ -120,29 +120,6 @@ exec('mkdir "C:\\My Apps\\test"'); // OK
 exec('mklink D:\\Temp\\hoge-Symlink "C:\\My Foo\\hoge"', { runsAdmin: true });
 ```
 
-### execFile
-
-Use Case: Applications that do not require processing results.
-
-```js
-var execFile = Wsh.ChildProcess.execFile; // Shorthand
-
-// Asynchronously run Notepad with active window
-execFile('notepad.exe');
-execFile('notepad.exe', ['D:\\memo.txt'], { winStyle: 'activeMax' });
-
-// Auto parse arg
-execFile('net.exe',
-  ['use', '\\\\CompName\\My Dir', 'mY&p@ss>_<', '/user:Tuckn'],
-  { winStyle: 'hidden' }
-);
-// parsed the args to 'use "\\\\CompName\\My Dir" mY^&p@ss^>_^< /user:Tuckn'
-
-// DOS commands
-execFile('mkdir', ['C:\\Tuckn\\test']); // Error
-execFile('mkdir', ['C:\\Tuckn\\test'], { shell: true }); // OK!
-```
-
 ### execSync
 
 Use Case: DOS commands or CUI applications that require processing results.
@@ -153,7 +130,8 @@ var execSync = Wsh.ChildProcess.execSync; // Shorthand
 var retObj = execSync('dir /A:H /B "C:\\Users"');
 console.dir(retObj);
 // Outputs:
-// { error: false,
+// { exitCode: 0,
+//   error: false,
 //   stdout: "All Users
 // Default
 // Default User
@@ -163,9 +141,32 @@ console.dir(retObj);
 var retObj = execSync('"C:\\Image Magick\\identify.exe" C:\\test.png');
 console.dir(retObj);
 // Outputs:
-// { error: false,
+// { exitCode: 0,
+//   error: false,
 //   stdout: "C:\test.png PNG 1920x1160 1920x1160+0+0 8-bit sRGB 353763B 0.000u 0:00.002",
 //   stderr: "" }
+```
+
+### execFile
+
+Use Case: Applications that do not require processing results.
+
+```js
+var execFile = Wsh.ChildProcess.execFile; // Shorthand
+
+// Asynchronously run Notepad with active window
+execFile('notepad.exe');
+execFile('notepad.exe', ['D:\\memo.txt']);
+
+// Auto parse arg
+execFile('net.exe',
+  ['use', '\\\\CompName\\My Dir', 'mY&p@ss>_<', '/user:Tuckn']
+);
+// parsed the args to 'use "\\\\CompName\\My Dir" mY^&p@ss^>_^< /user:Tuckn'
+
+// DOS commands
+execFile('mkdir', ['C:\\Tuckn\\test']); // Error
+execFile('mkdir', ['C:\\Tuckn\\test'], { shell: true }); // OK!
 ```
 
 ### execFileSync
@@ -176,12 +177,12 @@ Use Case: Applications that require processing results.
 var execFileSync = Wsh.ChildProcess.execFileSync; // Shorthand
 
 var retObj = execFileSync('net.exe',
-  ['use', '\\\\CompName\\IPC$', 'mY&p@ss>_<', '/user:Tuckn'],
-  { winStyle: 'hidden' }
+  ['use', '\\\\CompName\\IPC$', 'mY&p@ss>_<', '/user:Tuckn']
 );
 console.dir(retObj);
 // Outputs:
-// { error: false,
+// { extiCode: 0,
+//   error: false,
 //   stdout: "....",
 //   stderr: "" }
 
@@ -200,11 +201,11 @@ var execFileSync = Wsh.ChildProcess.execFileSync; // Shorthand
 
 var log = execFileSync('net.exe',
  ['use', '\\\\CompName\\IPC$', 'mY&p@ss>_<', '/user:Tuckn'],
- { isDryRun: true }
+ { isDryRun: true, shell: true }
 );
 console.log(log);
 // Outputs:
-// dry-run [_shRun]: C:\Windows\System32\cmd.exe /S /C"net.exe use \\CompName\IPC$ mY^&p@ss^>_^< /user:Tuckn 1> C:\%TMP%\stdout.log 2> C:\%TMP%\stderr.log"
+// dry-run [os.exeSync]: C:\Windows\System32\cmd.exe /S /C"net.exe use \\CompName\IPC$ mY^&p@ss^>_^< /user:Tuckn 1> C:\%TMP%\stdout.log 2> C:\%TMP%\stderr.log"
 ```
 
 

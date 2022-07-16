@@ -12,6 +12,7 @@ var CD = Wsh.Constants;
 var util = Wsh.Util;
 var path = Wsh.Path;
 var os = Wsh.OS;
+var wmi = Wsh.OS.WMI;
 var fs = Wsh.FileSystem;
 var fse = Wsh.FileSystemExtra;
 var child_process = Wsh.ChildProcess;
@@ -19,7 +20,7 @@ var child_process = Wsh.ChildProcess;
 var isSolidString = util.isSolidString;
 var includes = util.includes;
 var startsWith = util.startsWith;
-var srr = os.surroundPath;
+var srrd = os.surroundCmdArg;
 var CMD = os.exefiles.cmd;
 var CSCRIPT = os.exefiles.cscript;
 
@@ -33,7 +34,7 @@ describe('ChildProcess', function () {
   var assetsDir = path.join(__dirname, 'assets');
   var mockWsfCLI = path.join(assetsDir, 'MockCLI.wsf');
   var mockWsfGUI = path.join(assetsDir, 'MockGUI.wsf');
-  var testCmd = srr(CSCRIPT) + ' ' + srr(__filename) + ' //job:test:ChildProcess';
+  var testCmd = srrd(CSCRIPT) + ' ' + srrd(__filename) + ' //job:test:ChildProcess';
   var noneStrVals = [true, false, undefined, null, 0, 1, NaN, Infinity, [], {}];
 
   test('splitCommand', function () {
@@ -80,6 +81,8 @@ describe('ChildProcess', function () {
     expect(rtnObj.argsStr).toBe('/D "filePath2" filePath1');
   });
 
+  // exec
+
   test('exec_dosCommand', function () {
     var exec = child_process.exec;
     var tmpPath = os.makeTmpPath();
@@ -90,7 +93,7 @@ describe('ChildProcess', function () {
       expect(_cb(exec, val)).toThrowError();
     });
 
-    cmd = 'mkdir ' + srr(tmpPath);
+    cmd = 'mkdir ' + srrd(tmpPath);
 
     // dry-run
     rtnVal = exec(cmd, { isDryRun: true });
@@ -130,7 +133,7 @@ describe('ChildProcess', function () {
     // Creates the symlink path
     var testFileSymlink = path.join(tmpDir, 'testfile-Symlink.txt');
 
-    cmd = 'mklink ' + srr(testFileSymlink) + ' ' + srr(testFile);
+    cmd = 'mklink ' + srrd(testFileSymlink) + ' ' + srrd(testFile);
 
     rtnVal = exec(cmd);
     expect(rtnVal).toBe(CD.runs.ok); // Always 0 (No runsAdmin option)
@@ -164,188 +167,7 @@ describe('ChildProcess', function () {
     expect(fs.existsSync(tmpDir)).toBe(false);
   });
 
-  test('exec_exeFile', function () {
-    var exec = child_process.exec;
-    var cmd;
-    var rtnVal;
-
-    cmd = srr(CSCRIPT) + ' //nologo //job:nonErr ' + srr(mockWsfCLI);
-
-    // dry-run
-    rtnVal = exec(cmd, { isDryRun: true });
-    expect(rtnVal).toContain('[_shRun]: ' + CMD + ' /S /C"' + cmd);
-
-    rtnVal = exec(cmd);
-    expect(rtnVal).toBe(CD.runs.ok); // Always 0 (No runsAdmin option)
-
-    cmd = srr(CSCRIPT) + ' //nologo //job:withErr ' + srr(mockWsfCLI);
-
-    rtnVal = exec(cmd);
-    expect(rtnVal).toBe(CD.runs.ok); // Always 0 (No runsAdmin option)
-  });
-
-  testName = 'exec_exeFile_runsAdminFalse';
-  test(testName, function () {
-    var exec = child_process.exec;
-    var cmd;
-    var resultFile = path.join(os.tmpdir(), testName + '.log');
-    var SUBPROCESS1_ADMIN = '/SUBPROCESS1_ADMIN';
-    var SUBPROCESS2_USER = '/SUBPROCESS2_USER';
-
-    if (includes(process.argv, SUBPROCESS1_ADMIN)) {
-      if (process.isAdmin()) {
-        cmd = testCmd + ' -t ' + testName + '$ ' + SUBPROCESS2_USER;
-
-        // dry-run
-        var rtnVal = exec(cmd, { runsAdmin: false, isDryRun: true });
-        fs.writeFileSync(resultFile, rtnVal, { encoding: 'utf8' });
-
-        exec(cmd, { runsAdmin: false });
-        process.exit(CD.runs.ok);
-      }
-
-      process.exit(CD.runs.err);
-    }
-
-    if (includes(process.argv, SUBPROCESS2_USER)) {
-      if (process.isAdmin()) {
-        fs.writeFileSync(resultFile, 'Failed', { encoding: 'utf8' });
-
-        process.exit(CD.runs.err);
-      }
-
-      var cmdLog = fs.readFileSync(resultFile, { encoding: 'utf8' });
-      fs.writeFileSync(resultFile, 'Success\n' + cmdLog, { encoding: 'utf8' });
-
-      process.exit(CD.runs.ok);
-    }
-
-    fse.removeSync(resultFile);
-    expect(fs.existsSync(resultFile)).toBe(false);
-
-    cmd = testCmd + ' -t ' + testName + '$ ' + SUBPROCESS1_ADMIN;
-
-    exec(cmd, { runsAdmin: true });
-
-    while (!fs.existsSync(resultFile)) WScript.Sleep(300);
-    expect(fs.existsSync(resultFile)).toBe(true);
-    WScript.Sleep(3000);
-
-    var logStr = fs.readFileSync(resultFile, { encoding: 'utf8' });
-    expect(startsWith(logStr, 'Success')).toBeTruthy();
-    expect(logStr).toContain('[os.Task.runTemporary]: ');
-
-    // Cleans
-    fse.removeSync(resultFile);
-    expect(fs.existsSync(resultFile)).toBe(false);
-  });
-
-  test('execFile_dosCommand', function () {
-    noneStrVals.forEach(function (val) {
-      expect(_cb(execFile, val)).toThrowError();
-    });
-
-    var execFile = child_process.execFile;
-    var tmpDir = os.makeTmpPath('execFile_CMDcmd_');
-    var rtnVal;
-
-    // Non shell option -> Fail, because mkdir is CMD command
-    // dry-run
-    rtnVal = execFile('mkdir', [tmpDir], { isDryRun: true });
-    expect(rtnVal).toContain('[_shRun]: mkdir ' + tmpDir);
-
-    expect(_cb(execFile, 'mkdir', [tmpDir])).toThrowError();
-
-    // With shell options
-    rtnVal = execFile('mkdir', [tmpDir], { shell: true, isDryRun: true });
-    expect(rtnVal).toContain('[_shRun]: ' + CMD + ' /S /C"mkdir ' + tmpDir);
-    expect(fs.existsSync(tmpDir)).toBe(false);
-
-    rtnVal = execFile('mkdir', [tmpDir], { shell: true });
-    expect(rtnVal).toBe(CD.runs.ok); // Always 0 (No runsAdmin option)
-
-    while (!fs.existsSync(tmpDir)) WScript.Sleep(300); // Waiting the finished
-    expect(fs.existsSync(tmpDir)).toBe(true);
-
-    // Cleans
-    fse.removeSync(tmpDir);
-    expect(fs.existsSync(tmpDir)).toBe(false);
-  });
-
-  test('execFile_exeFile_activeDef', function () {
-    var execFile = child_process.execFile;
-    var args;
-    var rtnVal;
-
-    args = ['//nologo', '//job:nonErr', mockWsfCLI];
-
-    // dry-run
-    rtnVal = execFile(CSCRIPT, args, { isDryRun: true });
-    expect(rtnVal).toContain('[_shRun]: ' + CSCRIPT + ' ' + args.join(' '));
-
-    // Default -> winStyle: "activeDef"
-    rtnVal = execFile(CSCRIPT, args);
-    expect(rtnVal).toBe(CD.runs.ok); // Always 0 (No runsAdmin option)
-
-    args = ['//nologo', '//job:withErr', mockWsfCLI];
-
-    rtnVal = execFile(CSCRIPT, args);
-    expect(rtnVal).toBe(CD.runs.ok); // Always 0 (No runsAdmin option)
-
-    expect('@TODO').toBe('Checked a window activated');
-  });
-
-  test('execFile_exeFile_hidden', function () {
-    var execFile = child_process.execFile;
-    var args;
-    var rtnVal;
-
-    // winStyle: "hidden"
-    args = ['//nologo', '//job:nonErr', mockWsfCLI];
-
-    rtnVal = execFile(CSCRIPT, args, { winStyle: 'hidden' });
-    expect(rtnVal).toBe(CD.runs.ok); // Always 0 (No runsAdmin option)
-
-    args = ['//nologo', '//job:withErr', mockWsfCLI];
-
-    rtnVal = execFile(CSCRIPT, { winStyle: 'hidden' });
-    expect(rtnVal).toBe(CD.runs.ok); // Always 0 (No runsAdmin option)
-
-    expect('@TODO').toBe('Checked a window hidden');
-  });
-
-  test('execFile_exeFile_runsAdminTrue', function () {
-    var execFile = child_process.execFile;
-    var symlinkPath = os.makeTmpPath('execFile_exeFile_runsAdmin_');
-    var args;
-    var cmd = '"mklink ' + srr(symlinkPath) + ' ' + srr(__filename) + '"';
-    var rtnVal;
-
-    args = ['/S', '/C', cmd];
-
-    rtnVal = execFile(CMD, args, { escapes: false });
-    // `mklink` returns 0 even if the link creation fails.
-    expect(rtnVal).toBe(0);
-    expect(fs.existsSync(symlinkPath)).toBe(false);
-
-    // dry-run
-    rtnVal = execFile(CMD, args, {
-      escapes: false, runsAdmin: true, isDryRun: true
-    });
-    expect(rtnVal).toContain('[os.runAsAdmin]: ' + CMD + ' ' + args.join(' '));
-    expect(fs.existsSync(symlinkPath)).toBe(false);
-
-    rtnVal = execFile(CMD, args, { escapes: false, runsAdmin: true });
-    // If use `runsAdmin: true` option, always returns `undefined`.
-    expect(rtnVal).toBeUndefined();
-
-    while (!fs.existsSync(symlinkPath)) WScript.Sleep(300);
-    expect(fs.existsSync(symlinkPath)).toBe(true);
-
-    // Cleans
-    fse.removeSync(symlinkPath);
-    expect(fs.existsSync(symlinkPath)).toBe(false);
-  });
+  // execSync
 
   test('execSync_dosCommand', function () {
     noneStrVals.forEach(function (val) {
@@ -354,7 +176,7 @@ describe('ChildProcess', function () {
 
     var execSync = child_process.execSync;
     var cmd;
-    var rtnVal;
+    var rtn;
 
     // Creates mock files
     var testDir = os.makeTmpPath('execSync_');
@@ -371,13 +193,21 @@ describe('ChildProcess', function () {
     cmd = 'dir /B "' + testDir + '"';
 
     // dry-run
-    rtnVal = execSync(cmd, { isDryRun: true });
-    expect(rtnVal).toContain('dry-run [_shRun]: ' + CMD + ' /S /C"' + cmd + ' 1>');
+    rtn = execSync(cmd, { isDryRun: true });
+    expect(rtn).toContain('dry-run [_shRun]: ' + CMD + ' /S /C"' + cmd + ' 1>');
+    // Executing
+    rtn = execSync(cmd);
+    expect(rtn.exitCode).toBe(CD.runs.ok);
+    expect(rtn.error).toBe(false);
+    expect(rtn.stdout).toBe('file1.txt\r\nfile2.log\r\nfile3\r\n');
+    expect(rtn.stderr).toBe('');
 
-    rtnVal = execSync(cmd);
-    expect(rtnVal.error).toBe(false);
-    expect(rtnVal.stdout).toBe('file1.txt\r\nfile2.log\r\nfile3\r\n');
-    expect(rtnVal.stderr).toBe('');
+    cmd = 'dir Non-Existing-Path';
+    rtn = execSync(cmd);
+    expect(rtn.exitCode).toBe(CD.runs.err);
+    expect(rtn.error).toBe(true);
+    expect(rtn.stdout).not.toBe('');
+    expect(rtn.stderr).not.toBe(''); // ファイルが見つかりません
 
     // Cleans
     fse.removeSync(testDir);
@@ -391,30 +221,33 @@ describe('ChildProcess', function () {
 
     var execSync = child_process.execSync;
     var cmd;
-    var rtnVal;
+    var rtn;
 
-    cmd = srr(CSCRIPT) + ' //nologo //job:withErr "' + mockWsfCLI + '"';
+    cmd = srrd(CSCRIPT) + ' //nologo //job:nonErr "' + mockWsfCLI + '"';
 
     // dry-run
-    rtnVal = execSync(cmd, { isDryRun: true });
-    expect(rtnVal).toContain('dry-run [_shRun]: ' + CMD + ' /S /C"' + cmd + ' 1>');
+    rtn = execSync(cmd, { isDryRun: true });
+    expect(rtn).toContain('dry-run [_shRun]: ' + CMD + ' /S /C"' + cmd + ' 1>');
+    // Executing
+    rtn = execSync(cmd);
 
-    rtnVal = execSync(cmd);
-    expect(rtnVal.error).toBe(true);
-    expect(rtnVal.stdout.indexOf('StdOut Message') !== -1).toBe(true);
-    expect(rtnVal.stderr.indexOf('StdErr Message') !== -1).toBe(true);
+    expect(rtn.exitCode).toBe(0);
+    expect(rtn.error).toBe(false);
+    expect(rtn.stdout.indexOf('StdOut Message') !== -1).toBe(true);
+    expect(rtn.stderr).toBe('');
 
-    cmd = srr(CSCRIPT) + ' //nologo //job:nonErr "' + mockWsfCLI + '"';
+    cmd = srrd(CSCRIPT) + ' //nologo //job:withErr "' + mockWsfCLI + '"';
+    rtn = execSync(cmd);
 
-    rtnVal = execSync(cmd);
-    expect(rtnVal.error).toBe(false);
-    expect(rtnVal.stdout.indexOf('StdOut Message') !== -1).toBe(true);
-    expect(rtnVal.stderr).toBe('');
+    expect(rtn.exitCode).toBe(1);
+    expect(rtn.error).toBe(true);
+    expect(rtn.stdout.indexOf('StdOut Message') !== -1).toBe(true);
+    expect(rtn.stderr.indexOf('StdErr Message') !== -1).toBe(true);
   });
 
   test('execSync_runsAdminTrue', function () {
     var execSync = child_process.execSync;
-    var rtnVal;
+    var rtn;
 
     // Creates the test directory
     var testDir = os.makeTmpPath('execSync-runsAdmin_');
@@ -429,27 +262,29 @@ describe('ChildProcess', function () {
     expect(fs.existsSync(testFile)).toBe(true);
 
     var testFileSymlink = path.join(testDir, 'testfile-Symlink.txt');
-    var cmd = 'mklink ' + srr(testFileSymlink) + ' ' + srr(testFile);
+    var cmd = 'mklink ' + srrd(testFileSymlink) + ' ' + srrd(testFile);
 
     // None runsAdmin option
-    rtnVal = execSync(cmd);
+    rtn = execSync(cmd);
     expect(fs.existsSync(testFileSymlink)).toBe(false); // Failed
-    expect(rtnVal.error).toBe(true);
-    expect(rtnVal.stdout).toBe('');
-    expect(isSolidString(rtnVal.stderr)).toBe(true);
+    expect(rtn.exitCode).toBe(CD.runs.err);
+    expect(rtn.error).toBe(true);
+    expect(rtn.stdout).toBe('');
+    expect(isSolidString(rtn.stderr)).toBe(true);
     // expect(rtnVal.stderr).toBe('この操作を実行するための十分な特権がありません。');
 
     // dry-run
-    rtnVal = execSync(cmd, { runsAdmin: true, isDryRun: true });
-    expect(rtnVal).toContain('[os.runAsAdmin]: ' + CMD + ' /S /C"' + cmd);
+    rtn = execSync(cmd, { runsAdmin: true, isDryRun: true });
+    expect(rtn).toContain('[os.runAsAdmin]: ' + CMD + ' /S /C"' + cmd);
     expect(fs.existsSync(testFileSymlink)).toBe(false);
 
     // Use runsAdmin option
-    rtnVal = execSync(cmd, { runsAdmin: true });
+    rtn = execSync(cmd, { runsAdmin: true });
     expect(fs.existsSync(testFileSymlink)).toBe(true);
-    expect(rtnVal.error).toBe(false);
-    expect(isSolidString(rtnVal.stdout)).toBe(true);
-    expect(rtnVal.stderr).toBe('');
+    expect(rtn.exitCode).toBe(undefined);
+    expect(rtn.error).toBe(false);
+    expect(isSolidString(rtn.stdout)).toBe(true);
+    expect(rtn.stderr).toBe('');
 
     // Cleans
     fse.removeSync(testDir);
@@ -527,33 +362,298 @@ describe('ChildProcess', function () {
     expect(fs.existsSync(stderrFile)).toBe(false);
   });
 
-  test('execFileSync_exeFile', function () {
+  // execFile
+
+  test('exec_exeFile', function () {
+    var exec = child_process.exec;
+    var cmd;
+    var rtnVal;
+
+    cmd = srrd(CSCRIPT) + ' //nologo //job:nonErr ' + srrd(mockWsfCLI);
+
+    // dry-run
+    rtnVal = exec(cmd, { isDryRun: true });
+    expect(rtnVal).toContain('[_shRun]: ' + CMD + ' /S /C"' + cmd);
+
+    rtnVal = exec(cmd);
+    expect(rtnVal).toBe(CD.runs.ok); // Always 0 (No runsAdmin option)
+
+    cmd = srrd(CSCRIPT) + ' //nologo //job:withErr ' + srrd(mockWsfCLI);
+
+    rtnVal = exec(cmd);
+    expect(rtnVal).toBe(CD.runs.ok); // Always 0 (No runsAdmin option)
+  });
+
+  testName = 'exec_exeFile_runsAdminFalse';
+  test(testName, function () {
+    var exec = child_process.exec;
+    var cmd;
+    var resultFile = path.join(os.tmpdir(), testName + '.log');
+    var SUBPROCESS1_ADMIN = '/SUBPROCESS1_ADMIN';
+    var SUBPROCESS2_USER = '/SUBPROCESS2_USER';
+
+    if (includes(process.argv, SUBPROCESS1_ADMIN)) {
+      if (process.isAdmin()) {
+        cmd = testCmd + ' -t ' + testName + '$ ' + SUBPROCESS2_USER;
+
+        // dry-run
+        var rtnVal = exec(cmd, { runsAdmin: false, isDryRun: true });
+        fs.writeFileSync(resultFile, rtnVal, { encoding: 'utf8' });
+
+        exec(cmd, { runsAdmin: false });
+        process.exit(CD.runs.ok);
+      }
+
+      process.exit(CD.runs.err);
+    }
+
+    if (includes(process.argv, SUBPROCESS2_USER)) {
+      if (process.isAdmin()) {
+        fs.writeFileSync(resultFile, 'Failed', { encoding: 'utf8' });
+
+        process.exit(CD.runs.err);
+      }
+
+      var cmdLog = fs.readFileSync(resultFile, { encoding: 'utf8' });
+      fs.writeFileSync(resultFile, 'Success\n' + cmdLog, { encoding: 'utf8' });
+
+      process.exit(CD.runs.ok);
+    }
+
+    fse.removeSync(resultFile);
+    expect(fs.existsSync(resultFile)).toBe(false);
+
+    cmd = testCmd + ' -t ' + testName + '$ ' + SUBPROCESS1_ADMIN;
+
+    exec(cmd, { runsAdmin: true });
+
+    while (!fs.existsSync(resultFile)) WScript.Sleep(300);
+    expect(fs.existsSync(resultFile)).toBe(true);
+    WScript.Sleep(3000);
+
+    var logStr = fs.readFileSync(resultFile, { encoding: 'utf8' });
+    expect(startsWith(logStr, 'Success')).toBeTruthy();
+    expect(logStr).toContain('[os.Task.runTemporary]: ');
+
+    // Cleans
+    fse.removeSync(resultFile);
+    expect(fs.existsSync(resultFile)).toBe(false);
+  });
+
+  test('execFile_dosCommand', function () {
+    noneStrVals.forEach(function (val) {
+      expect(_cb(execFile, val)).toThrowError();
+    });
+
+    var execFile = child_process.execFile;
+    var tmpDir = os.makeTmpPath('execFile_CMDcmd_');
+    var rtn;
+
+    // Non shell option
+    // dry-run
+    rtn = execFile('mkdir', [tmpDir], { isDryRun: true });
+    expect(rtn).toContain('[os.exec]: mkdir ' + tmpDir);
+    // Executing -> Fail, because mkdir is CMD command
+    expect(_cb(execFile, 'mkdir', [tmpDir])).toThrowError();
+
+    // With shell options
+    // dry-run
+    rtn = execFile('mkdir', [tmpDir], { shell: true, isDryRun: true });
+    expect(rtn).toContain('[os.exec]: ' + CMD + ' /S /C"mkdir ' + tmpDir);
+    expect(fs.existsSync(tmpDir)).toBe(false);
+    // Executing
+    rtn = execFile('mkdir', [tmpDir], { shell: true });
+    expect(rtn.ExitCode).toBe(CD.runs.ok); // Always 0 (Async)
+
+    while (rtn.Status == 0) WScript.Sleep(300); // Waiting the finished
+    expect(fs.existsSync(tmpDir)).toBe(true);
+
+    // Cleans
+    fse.removeSync(tmpDir);
+    expect(fs.existsSync(tmpDir)).toBe(false);
+  });
+
+  test('execFile_exeFile_CLI', function () {
+    var execFile = child_process.execFile;
+    var args;
+    var rtn, stdOut, stdErr;
+
+    // Stdout
+    args = ['//nologo', '//job:nonErr', mockWsfCLI];
+
+    // dry-run
+    rtn = execFile(CSCRIPT, args, { isDryRun: true });
+    expect(rtn).toContain('[os.exec]: ' + CSCRIPT + ' ' + os.joinCmdArgs(args));
+    // Executing
+    rtn = execFile(CSCRIPT, args);
+    expect(rtn.ExitCode).toBe(CD.runs.ok); // Always 0 (Async)
+    // Waiting the finished
+    while (rtn.Status == 0) WScript.Sleep(300);
+
+    stdOut = rtn.StdOut.ReadAll();
+    expect(rtn.StdOut.ReadAll() === '').toBe(true); // empty after ReadAll
+
+    stdErr = rtn.StdErr.ReadAll();
+    expect(rtn.StdErr.ReadAll() === '').toBe(true); // empty after ReadAll
+
+    expect(stdOut.indexOf('StdOut Message') !== -1).toBe(true);
+    expect(stdErr === '').toBe(true); // Empty
+
+    // Stderr
+    args = ['//nologo', '//job:withErr', mockWsfCLI];
+    // Executing
+    rtn = execFile(CSCRIPT, args);
+    // Waiting the finished
+    while (rtn.Status == 0) WScript.Sleep(300);
+
+    stdOut = rtn.StdOut.ReadAll();
+    expect(rtn.StdOut.ReadAll() === '').toBe(true); // empty after ReadAll
+
+    stdErr = rtn.StdErr.ReadAll();
+    expect(rtn.StdErr.ReadAll() === '').toBe(true); // empty after ReadAll
+
+    expect(stdOut === 'StdOut Message').toBe(true);
+    expect(stdErr.indexOf('StdErr Message') !== -1).toBe(true);
+  });
+
+  test('execFile_exeFile_GUI', function () {
+    var execFile = child_process.execFile;
+    var args;
+    var rtn;
+
+    args = ['//nologo', '//job:run', mockWsfGUI];
+
+    rtn = execFile(CSCRIPT, args);
+    expect(rtn.ExitCode).toBe(CD.runs.ok); // Always 0 (Async)
+
+    // Get the GUI process info
+    var sWbemObjSet = wmi.getProcess(rtn.ProcessID);
+    var obj = wmi.toJsObject(sWbemObjSet);
+
+    // Exit the GUI process
+    rtn.Terminate();
+
+    sWbemObjSet = wmi.getProcess(rtn.ProcessID);
+    // sWbemObjSet is null = the GUI process not found
+    expect(_cb(wmi.toJsObject, sWbemObjSet)).toThrowError();
+  });
+
+  test('execFile_exeFile_runsAdminTrue', function () {
+    var execFile = child_process.execFile;
+    var symlinkPath = os.makeTmpPath('execFile_exeFile_runsAdmin_');
+    var args, argsStr;
+    var cmd = '"mklink ' + srrd(symlinkPath) + ' ' + srrd(__filename) + '"';
+    var rtn, stdOut, stdErr;
+
+    args = ['/S', '/C', cmd];
+
+    rtn = execFile(CMD, args, { escapes: false });
+    expect(rtn.ExitCode).toBe(CD.runs.ok); // Always 0 (Async)
+    // Waiting the finished
+    while (rtn.Status == 0) WScript.Sleep(300);
+
+    stdOut = rtn.StdOut.ReadAll();
+    expect(rtn.StdOut.ReadAll() === '').toBe(true); // empty after ReadAll
+
+    stdErr = rtn.StdErr.ReadAll();
+    expect(rtn.StdErr.ReadAll() === '').toBe(true); // empty after ReadAll
+
+    expect(stdOut).toBe(''); // Empty
+    expect(stdErr).not.toBe(''); // この操作を実行するための十分な特権がありません。
+
+    expect(fs.existsSync(symlinkPath)).toBe(false);
+
+    // dry-run
+    rtn = execFile(CMD, args, {
+      escapes: false,
+      runsAdmin: true,
+      isDryRun: true
+    });
+
+    argsStr = os.joinCmdArgs(args, { escapes: false });
+    expect(rtn).toContain('[os.runAsAdmin]: ' + CMD + ' ' + argsStr);
+    expect(fs.existsSync(symlinkPath)).toBe(false);
+    // Executing
+    rtn = execFile(CMD, args, { escapes: false, runsAdmin: true });
+    // If use `runsAdmin: true` option, always returns `undefined`.
+    expect(rtn).toBeUndefined();
+
+    while (!fs.existsSync(symlinkPath)) WScript.Sleep(300);
+    expect(fs.existsSync(symlinkPath)).toBe(true);
+
+    // Cleans
+    fse.removeSync(symlinkPath);
+    expect(fs.existsSync(symlinkPath)).toBe(false);
+  });
+
+  // execFileSync
+
+  test('execFileSync_exeFile_CLI', function () {
     noneStrVals.forEach(function (val) {
       expect(_cb(execFileSync, val)).toThrowError();
     });
 
     var execFileSync = child_process.execFileSync;
     var args;
-    var rtnVal;
-
-    args = ['//nologo', '//job:withErr', mockWsfCLI];
-
-    // dry-run
-    rtnVal = execFileSync(CSCRIPT, args, { isDryRun: true });
-    expect(rtnVal).toContain('dry-run [_shRun]: ' + CMD + ' /S /C"'
-      + CSCRIPT + ' ' + args.join(' ') + ' 1>');
-
-    rtnVal = execFileSync(CSCRIPT, args);
-    expect(rtnVal.error).toBe(true);
-    expect(rtnVal.stdout.indexOf('StdOut Message') !== -1).toBe(true);
-    expect(rtnVal.stderr.indexOf('StdErr Message') !== -1).toBe(true);
+    var rtn;
 
     args = ['//nologo', '//job:nonErr', mockWsfCLI];
 
-    rtnVal = execFileSync(CSCRIPT, args);
-    expect(rtnVal.error).toBe(false);
-    expect(rtnVal.stdout.indexOf('StdOut Message') !== -1).toBe(true);
-    expect(rtnVal.stderr).toBe('');
+    // dry-run
+    rtn = execFileSync(CSCRIPT, args, { isDryRun: true });
+    expect(rtn).toContain('dry-run [os.execSync]: ' + CSCRIPT + ' ' + os.joinCmdArgs(args));
+
+    rtn = execFileSync(CSCRIPT, args);
+    expect(rtn.exitCode).toBe(0);
+    expect(rtn.error).toBe(false);
+    expect(rtn.stdout).toBe('StdOut Message');
+    expect(rtn.stderr).toBe('');
+
+    args = ['//nologo', '//job:withErr', mockWsfCLI];
+
+    rtn = execFileSync(CSCRIPT, args);
+    expect(rtn.exitCode).toBe(1);
+    expect(rtn.error).toBe(true);
+    expect(rtn.stdout).toBe('StdOut Message');
+    expect(rtn.stderr).toBe('StdErr Message');
+  });
+
+  test('execFileSync_exeFile_GUI', function () {
+    noneStrVals.forEach(function (val) {
+      expect(_cb(execFileSync, val)).toThrowError();
+    });
+
+    var execFileSync = child_process.execFileSync;
+    var args;
+    var rtn;
+
+    args = ['//nologo', '//job:run', mockWsfGUI];
+
+    // dry-run
+    rtn = execFileSync(CSCRIPT, args, { isDryRun: true });
+    expect(rtn).toContain('dry-run [os.execSync]: ' + CSCRIPT + ' ' + os.joinCmdArgs(args));
+
+    rtn = execFileSync(CSCRIPT, args);
+    expect(rtn.exitCode).toBe(0);
+    expect(rtn.error).toBe(false);
+    expect(rtn.stdout).toBe('');
+    expect(rtn.stderr).toBe('');
+
+    args = ['//nologo', '//job:autoQuit0', mockWsfGUI];
+
+    rtn = execFileSync(CSCRIPT, args);
+    expect(rtn.exitCode).toBe(0);
+    expect(rtn.error).toBe(false);
+    expect(rtn.stdout).toBe('');
+    expect(rtn.stderr).toBe('');
+
+    args = ['//nologo', '//job:autoQuit1', mockWsfGUI];
+
+    rtn = execFileSync(CSCRIPT, args);
+    expect(rtn.exitCode).toBe(1);
+    expect(rtn.error).toBe(false);
+    expect(rtn.stdout).toBe('');
+    expect(rtn.stderr).toBe('');
   });
 
   test('spawnSync', function () {

@@ -27,17 +27,23 @@
   var insp = util.inspect;
   var obtain = util.obtainPropVal;
   var isArray = util.isArray;
+  var isEmpty = util.isEmpty;
   var isString = util.isString;
   var isSolidArray = util.isSolidArray;
   var isSolidString = util.isSolidString;
   var hasContent = util.hasContent;
   var isSameStr = util.isSameMeaning;
-  var srrPath = os.surroundPath;
+  var unset = util.unset;
+  var srrd = os.surroundCmdArg;
 
   var child_process = Wsh.ChildProcess;
 
   /** @constant {string} */
   var MODULE_TITLE = 'WshChildProcess/ChildProcess.js';
+
+  var throwErrNonArray = function (functionName, typeErrVal) {
+    util.throwTypeError('array', MODULE_TITLE, functionName, typeErrVal);
+  };
 
   var throwErrNonStr = function (functionName, typeErrVal) {
     util.throwTypeError('string', MODULE_TITLE, functionName, typeErrVal);
@@ -123,40 +129,9 @@
     return { mainCmd: mainCmd, argsStr: argsStr };
   }; // }}}
 
-  // _run {{{
-  /**
-   * Asynchronously executes the command. The function to be executed is one of os.run, os.runAsAdmin and os.Task.runTemporary.
-   *
-   * @private
-   * @param {string} cmdStr
-   * @param {string[]} [args]
-   * @param {object} [options] - See {@link https://docs.tuckn.net/WshOS/global.html#typeShRunOptions|typeShRunOptions}.
-   * @returns {(0|void)} - Always 0 or undefined
-   */
-  function _run (cmdStr, args, options) {
-    var FN = '_run';
-    if (!isSolidString(cmdStr)) throwErrNonStr(FN, cmdStr);
-
-    var runsAdmin = obtain(options, 'runsAdmin', null);
-
-    try {
-      if (runsAdmin === true && !process.isAdmin()) {
-        return os.runAsAdmin(cmdStr, args, options);
-      } else if (runsAdmin === false && process.isAdmin()) {
-        return os.Task.runTemporary(cmdStr, args, options);
-      } else {
-        return os.run(cmdStr, args, options);
-      }
-    } catch (e) {
-      throw new Error(insp(e) + '\n'
-        + '  at ' + FN + ' (' + MODULE_TITLE + ')\n'
-        + '  cmdStr: "' + cmdStr + '"\n  args: ' + insp(args));
-    }
-  } // }}}
-
   // child_process.exec {{{
   /**
-   * Asynchronously executes the command within CommandPrompt. Similar to {@link https://nodejs.org/api/child_process.html#child_process_child_process_exec_command_options_callback|Node.js child_process.exec()}.
+   * Asynchronously executes the command within CommandPrompt. Similar to {@link https://nodejs.org/api/child_process.html#child_process_child_process_exec_command_options_callback|Node.js child_process.exec()}. The function to be executed is one of os.run, os.runAsAdmin and os.Task.runTemporary.
    *
    * @example
    * // Use Case: DOS commands or CUI applications that do not require processing results
@@ -193,167 +168,41 @@
    * @function exec
    * @memberof Wsh.ChildProcess
    * @param {string} command - The executable file path or the command of CMD.
-   * @param {object} [options] - Optional parameters.
+   * @param {object} [options] - See {@link https://docs.tuckn.net/WshOS/global.html#typeShRunOptions|typeShRunOptions}.
    * @param {(boolean|undefined)} [options.runsAdmin] - true: as Admin, false: as User
-   * @param {boolean} [options.shell=true] - Wrap with CMD.EXE
-   * @param {(number|string)} [options.winStyle='hidden'] - See {@link https://docs.tuckn.net/WshUtil/Wsh.Constants.windowStyles.html|Wsh.Constants.windowStyles}.
-   * @param {boolean} [options.isDryRun=false] - No execute, returns the string of command.
-   * @returns {(0|void|string)} - 0 or undefined. If options.isDryRun is true, returns string.
+   * @returns {(void|number|string)} - A return value varies depending on an options parameter. options.runsAdmin: true => void. options.runsAdmin: false and WSH process is admin => number. options.isDryRun: true => string. When others, returns 0.
    */
   child_process.exec = function (command, options) {
     var FN = 'child_process.exec';
     if (!isSolidString(command)) throwErrNonStr(FN, command);
 
     var exeObj = child_process.splitCommand(command);
+    var cmdStr = exeObj.mainCmd;
+    var args = exeObj.argsStr;
 
-    return _run(
-      exeObj.mainCmd,
-      exeObj.argsStr,
-      objAdd({ shell: true, winStyle: 'hidden' }, options)
-    );
-  }; // }}}
+    var op = objAdd({ shell: true, winStyle: 'hidden' }, options);
 
-  // child_process.execFile {{{
-  /**
-   * Asynchronously executes the executable file. Similar to {@link https://nodejs.org/api/child_process.html#child_process_child_process_execfile_file_args_options_callback|Node.js child_process.execFile()}.
-   *
-   * @example
-   * // Use Case: Applications that do not require processing results
-   * var execFile = Wsh.ChildProcess.execFile; // Shorthand
-   *
-   * // Asynchronously run Notepad with active window
-   * execFile('notepad.exe');
-   * execFile('notepad.exe', ['D:\\memo.txt'], { winStyle: 'activeMax' });
-   *
-   * // Arguments will be parsed
-   * // 'mY& p@ss>_<' to '"mY^& p@ss^>_^<"'
-   * execFile('net.exe',
-   *   ['use', '\\\\CompName\\IPC$', 'mY& p@ss>_<', '/user:Tuckn'],
-   *   { winStyle: 'hidden' }
-   * );
-   *
-   * // A DOS command
-   * execFile('mkdir', ['C:\\Tuckn\\test']); // Error
-   * execFile('mkdir', ['C:\\Tuckn\\test'], { shell: true }); // OK!
-   *
-   * // dry-run: No execute, returns the string of command.
-   * var log = execFile('notepad.exe', ['D:\\memo.txt'], { isDryRun: true });
-   * console.log(log);
-   * // Outputs:
-   * // dry-run [_shRun]: notepad.exe D:\memo.txt
-   * @function execFile
-   * @memberof Wsh.ChildProcess
-   * @param {string} file - The executable file path or the command of CMD.
-   * @param {string[]} [args] - The Array of arguments.
-   * @param {object} [options] - Optional parameters.
-   * @param {(boolean|undefined)} [options.runsAdmin] - true: as Admin, false: as User
-   * @param {(number|string)} [options.winStyle='activeDef'] - See {@link https://docs.tuckn.net/WshUtil/Wsh.Constants.windowStyles.html|Wsh.Constants.windowStyles}.
-   * @param {boolean} [options.shell=false] - Wrap with CMD.EXE
-   * @param {boolean} [options.isDryRun=false] - No execute, returns the string of command.
-   * @returns {(0|void|string)} - 0 or undefined. If options.isDryRun is true, returns string.
-   */
-  child_process.execFile = function (file, args, options) {
-    var FN = 'child_process.execFile';
-    if (!isSolidString(file)) throwErrNonStr(FN, file);
-    if (!isSolidArray(args)) args = [];
-
-    return _run(file, args,
-      objAdd({ shell: false, winStyle: 'activeDef' }, options));
-  }; // }}}
-
-  // _runSync {{{
-  /**
-   * @typedef {object} typeRunSyncReturn
-   * @property {boolean} error - Error or not.
-   * @property {string} stdout - Std Output.
-   * @property {string} stderr - Std Error.
-   */
-
-  /**
-   * Executes the command and returns the StdOut.
-   *
-   * @private
-   * @param {string} cmdStr
-   * @param {string[]|string} args
-   * @param {object} [options] - See {@link https://docs.tuckn.net/WshOS/global.html#typeShRunOptions|typeShRunOptions}.
-   * @returns {typeRunSyncReturn} - { error, stdout, stderr }
-   */
-  function _runSync (cmdStr, args, options) {
-    var FN = '_runSync';
-    if (!isSolidString(cmdStr)) throwErrNonStr(FN, cmdStr);
-
-    var logStdout = os.makeTmpPath('cp-execSync_stdout_', '.log');
-    var logStderr = os.makeTmpPath('cp-execSync_stderr_', '.log');
-
-    var stdioArgs;
-    if (isArray(args)) {
-      stdioArgs = args.concat([
-        '1>', srrPath(logStdout), '2>', srrPath(logStderr)]);
-    } else if (isString(args)) {
-      stdioArgs = args + ' 1>' + srrPath(logStdout) + ' 2>' + srrPath(logStderr);
-    } else {
-      throw new Error('Error [ERR_INVALID_ARG_TYPE]\n'
-        + '  at ' + FN + ' (' + MODULE_TITLE + ')\n'
-        + '  cmdStr: "' + cmdStr + '"\n  args: ' + insp(args));
-    }
-
-    var error = true;
-    var stdout = '';
-    var stderr = '';
     var runsAdmin = obtain(options, 'runsAdmin', null);
+    unset(op, 'runsAdmin');
 
     try {
-      var retVal;
-
       if (runsAdmin === true && !process.isAdmin()) {
-        retVal = os.runAsAdmin(cmdStr, stdioArgs, options);
+        return os.runAsAdmin(cmdStr, args, op);
       } else if (runsAdmin === false && process.isAdmin()) {
-        retVal = os.Task.runTemporary(cmdStr, stdioArgs, options);
+        return os.Task.runTemporary(cmdStr, args, op);
       } else {
-        retVal = os.runSync(cmdStr, stdioArgs, options);
+        return os.run(cmdStr, args, op);
       }
-
-      var isDryRun = obtain(options, 'isDryRun', false);
-      if (isDryRun) return 'dry-run [' + FN + ']: ' + retVal;
     } catch (e) {
       throw new Error(insp(e) + '\n'
         + '  at ' + FN + ' (' + MODULE_TITLE + ')\n'
         + '  cmdStr: "' + cmdStr + '"\n  args: ' + insp(args));
     }
-
-    // Wait and Read the stdout
-    try {
-      var encoding = obtain(options, 'encoding', os.cmdCodeset());
-
-      /**
-       * @FIXME Infinity roop when os.runAsAdmin() run but rejected admin running
-       */
-      stdout = fse.ensureReadingFile(logStdout, 0, { encoding: encoding });
-      stderr = fse.ensureReadingFile(logStderr, 0, { encoding: encoding });
-      error = isSolidString(stderr);
-    } catch (e) {
-      throw new Error(insp(e) + '\n'
-        + '  at ' + FN + ' (' + MODULE_TITLE + ')\n'
-        + '  cmdStr: "' + cmdStr + '"\n  args: ' + insp(args));
-    }
-
-    // Delete the temporary log files for standard streams.
-    // @note 管理者で実行した結果のStdファイルもユーザーから削除可能
-    try {
-      fse.removeSync(logStdout);
-      fse.removeSync(logStderr);
-    } catch (e) {
-      throw new Error(insp(e) + '\n'
-        + '  at ' + FN + ' (' + MODULE_TITLE + ')\n'
-        + '  cmdStr: "' + cmdStr + '"\n  args: ' + insp(args));
-    }
-
-    return { stdout: stdout, stderr: stderr, error: error };
-  } // }}}
+  }; // }}}
 
   // child_process.execSync {{{
   /**
-   * Executes the command within CommandPrompt. Similar to {@link https://nodejs.org/api/child_process.html#child_process_child_process_execsync_command_options|Node.js child_process.execSync()}.
+   * Executes the command within CommandPrompt and returns a StdOut. Similar to {@link https://nodejs.org/api/child_process.html#child_process_child_process_execsync_command_options|Node.js child_process.execSync()}.
    *
    * @example
    * // Use Case: DOS commands or CUI applications that require processing results
@@ -390,24 +239,161 @@
    * @function execSync
    * @memberof Wsh.ChildProcess
    * @param {string} command - The executable file path or the command of CMD.
-   * @param {object} [options] - Optional parameters.
+   * @param {object} [options] - See {@link https://docs.tuckn.net/WshOS/global.html#typeShRunOptions|typeShRunOptions}.
    * @param {(boolean|undefined)} [options.runsAdmin] - true: as Admin, false: as User
-   * @param {boolean} [options.shell=true] - Wrap with CMD.EXE
-   * @param {(number|string)} [options.winStyle='hidden'] - See {@link https://docs.tuckn.net/WshUtil/Wsh.Constants.windowStyles.html|Wsh.Constants.windowStyles}.
-   * @param {boolean} [options.isDryRun=false] - No execute, returns the string of command.
-   * @returns {typeRunSyncReturn|string} - If options.isDryRun is true, returns string.
+   * @returns {(typeExecSyncReturn|string)} - Basecaly returns {@link https://docs.tuckn.net/WshOS/global.html#typeExecSyncReturn|typeExecSyncReturn}..But, option.runsAdmin: true => exitCode is always undefined. options.runsAdmin: false and WSH process is admin => exitCode is always undefined. options.isDryRun: true => string.
    */
   child_process.execSync = function (command, options) {
     var FN = 'child_process.execSync';
     if (!isSolidString(command)) throwErrNonStr(FN, command);
 
     var exeObj = child_process.splitCommand(command);
+    var cmdStr = exeObj.mainCmd;
+    var args = exeObj.argsStr;
 
-    return _runSync(
-      exeObj.mainCmd,
-      exeObj.argsStr,
-      objAdd({ shell: true, winStyle: 'hidden' }, options)
-    );
+    var op = objAdd({ shell: true, winStyle: 'hidden' }, options);
+
+    var runsAdmin = obtain(options, 'runsAdmin', null);
+    unset(op, 'runsAdmin');
+
+    var logStdout = os.makeTmpPath('cp-execSync_stdout_', '.log');
+    var logStderr = os.makeTmpPath('cp-execSync_stderr_', '.log');
+
+    var stdioArgs;
+    if (isArray(args)) {
+      stdioArgs = args.concat(['1>', srrd(logStdout), '2>', srrd(logStderr)]);
+    } else if (isString(args)) {
+      stdioArgs = args + ' 1>' + srrd(logStdout) + ' 2>' + srrd(logStderr);
+    } else {
+      throw new Error('Error [ERR_INVALID_ARG_TYPE]\n'
+        + '  at ' + FN + ' (' + MODULE_TITLE + ')\n'
+        + '  cmdStr: "' + cmdStr + '"\n  args: ' + insp(args));
+    }
+
+    var exitCode;
+    var error = true;
+    var stdout = '';
+    var stderr = '';
+
+    try {
+      var retVal;
+
+      if (runsAdmin === true && !process.isAdmin()) {
+        retVal = os.runAsAdmin(cmdStr, stdioArgs, op);
+      } else if (runsAdmin === false && process.isAdmin()) {
+        retVal = os.Task.runTemporary(cmdStr, stdioArgs, op);
+      } else {
+        retVal = os.runSync(cmdStr, stdioArgs, op);
+      }
+
+      var isDryRun = obtain(options, 'isDryRun', false);
+      if (isDryRun) {
+        return 'dry-run [' + FN + ']: ' + retVal;
+      } else {
+        exitCode = retVal;
+      }
+    } catch (e) {
+      throw new Error(insp(e) + '\n'
+        + '  at ' + FN + ' (' + MODULE_TITLE + ')\n'
+        + '  cmdStr: "' + cmdStr + '"\n  args: ' + insp(args));
+    }
+
+    // Wait and Read the stdout
+    try {
+      var encoding = obtain(options, 'encoding', os.cmdCodeset());
+
+      /**
+       * @FIXME Infinity roop when os.runAsAdmin() run but rejected admin running
+       */
+      stdout = fse.ensureReadingFile(logStdout, 0, { encoding: encoding });
+      stderr = fse.ensureReadingFile(logStderr, 0, { encoding: encoding });
+      error = isSolidString(stderr);
+    } catch (e) {
+      throw new Error(insp(e) + '\n'
+        + '  at ' + FN + ' (' + MODULE_TITLE + ')\n'
+        + '  cmdStr: "' + cmdStr + '"\n  args: ' + insp(args));
+    }
+
+    // Delete the temporary log files for standard streams.
+    // @note 管理者で実行した結果のStdファイルもユーザーから削除可能
+    try {
+      fse.removeSync(logStdout);
+      fse.removeSync(logStderr);
+    } catch (e) {
+      throw new Error(insp(e) + '\n'
+        + '  at ' + FN + ' (' + MODULE_TITLE + ')\n'
+        + '  cmdStr: "' + cmdStr + '"\n  args: ' + insp(args));
+    }
+
+    return {
+      exitCode: exitCode,
+      error: error,
+      stdout: stdout,
+      stderr: stderr
+    };
+  }; // }}}
+
+  // child_process.execFile {{{
+  /**
+   * Asynchronously executes the executable file. Similar to {@link https://nodejs.org/api/child_process.html#child_process_child_process_execfile_file_args_options_callback|Node.js child_process.execFile()}.
+   *
+   * @example
+   * // Use Case: Applications that do not require processing results
+   * var execFile = Wsh.ChildProcess.execFile; // Shorthand
+   *
+   * // Asynchronously run Notepad with active window
+   * execFile('notepad.exe');
+   * execFile('notepad.exe', ['D:\\memo.txt'], { winStyle: 'activeMax' });
+   *
+   * // Arguments will be parsed
+   * // 'mY& p@ss>_<' to '"mY^& p@ss^>_^<"'
+   * execFile('net.exe',
+   *   ['use', '\\\\CompName\\IPC$', 'mY& p@ss>_<', '/user:Tuckn'],
+   *   { winStyle: 'hidden' }
+   * );
+   *
+   * // A DOS command
+   * execFile('mkdir', ['C:\\Tuckn\\test']); // Error
+   * execFile('mkdir', ['C:\\Tuckn\\test'], { shell: true }); // OK!
+   *
+   * // dry-run: No execute, returns the string of command.
+   * var log = execFile('notepad.exe', ['D:\\memo.txt'], { isDryRun: true });
+   * console.log(log);
+   * // Outputs:
+   * // dry-run [_shRun]: notepad.exe D:\memo.txt
+   * @function execFile
+   * @memberof Wsh.ChildProcess
+   * @param {string} file - The executable file path or the command of CMD.
+   * @param {(string[]|string)} [args] - The arguments.
+   * @param {typeOsExecOptions} [options] - See {@link https://docs.tuckn.net/WshOS/global.html#typeOsExecOptions|typeOsExecOptions}.
+   * @param {(boolean|undefined)} [options.runsAdmin] - true: as Admin, false: as User
+   * @param {(number|string)} [options.winStyle='activeDef'] - See {@link https://docs.tuckn.net/WshUtil/Wsh.Constants.windowStyles.html|Wsh.Constants.windowStyles}.
+   * @param {boolean} [options.shell=false] - Wrap with CMD.EXE
+   * @param {boolean} [options.isDryRun=false] - No execute, returns the string of command.
+   * @returns {(typeExecObject|number|void|string)} - A return value varies depending on an options parameter. options.runsAdmin: true => void. options.runsAdmin: false and WSH process is admin => number. options.isDryRun: true => string. When others, returns {@link https://docs.tuckn.net/WshOS/global.html#typeExecObject|typeExecObject}.
+   */
+  child_process.execFile = function (file, args, options) {
+    var FN = 'child_process.execFile';
+    if (!isSolidString(file)) throwErrNonStr(FN, file);
+
+    var op = objAdd({ shell: false }, options);
+
+    var runsAdmin = obtain(options, 'runsAdmin', null);
+    unset(op, 'runsAdmin');
+
+    try {
+      if (runsAdmin === true && !process.isAdmin()) {
+        return os.runAsAdmin(file, args, op);
+      } else if (runsAdmin === false && process.isAdmin()) {
+        return os.Task.runTemporary(file, args, op);
+      } else {
+        return os.exec(file, args, op);
+      }
+    } catch (e) {
+      throw new Error(insp(e) + '\n'
+        + '  at ' + FN + ' (' + MODULE_TITLE + ')\n'
+        + '  file: "' + file + '"\n  args: ' + insp(args));
+    }
   }; // }}}
 
   // child_process.execFileSync {{{
@@ -419,54 +405,63 @@
    * var execFileSync = Wsh.ChildProcess.execFileSync; // Shorthand
    *
    * var retObj = execFileSync('net.exe',
-   *   ['use', '\\\\CompName\\IPC$', 'mY& p@ss>_<', '/user:Tuckn'],
-   *   { winStyle: 'hidden' }
+   *   ['use', '\\\\CompName\\IPC$', 'mY& p@ss>_<', '/user:Tuckn']
    * );
    * console.dir(retObj);
    * // Outputs:
-   * // { error: false,
+   * // { exitCode: 0,
+   * //   error: false,
    * //   stdout: "....",
    * //   stderr: "" }
    *
-   * execFileSync('C:\\Program Files\\IrfanView\\i_view64.exe', ['C:\\result.png']);
-   * // Run IrfanView with active window.
+   * execFileSync('C:\\Program Files\\IrfanView\\i_view64.exe', 'C:\\result.png');
+   * // Runs IrfanView with active window.
    * // and this JS process is stopping until you close the window.
    * console.log('Closed the window of IrfanView');
    *
    * // dry-run: No execute, returns the string of command.
    * var log = execFileSync('net.exe',
    *   ['use', '\\\\CompName\\IPC$', 'mY& p@ss>_<', '/user:Tuckn'],
-   *   { isDryRun: true }
+   *   { shell: true, isDryRun: true }
    * );
    * console.log(log);
    * // Outputs:
-   * // dry-run [_shRun]: C:\Windows\System32\cmd.exe /S /C"net.exe use \\CompName\IPC$ "mY^& p@ss^>_^<" /user:Tuckn 1> C:\%TMP%\stdout.log 2> C:\%TMP%\stderr.log"
+   * // dry-run [os.exeSync]: C:\Windows\System32\cmd.exe /S /C"net.exe use \\CompName\IPC$ "mY^& p@ss^>_^<" /user:Tuckn 1> C:\%TMP%\stdout.log 2> C:\%TMP%\stderr.log"
    * @function execFileSync
    * @memberof Wsh.ChildProcess
    * @param {string} file - The executable file path or the command of CMD.
-   * @param {string[]} [args]
-   * @param {object} [options] - Optional parameters.
+   * @param {(string[]|string)} [args] - The arguments.
+   * @param {typeOsExecOptions} [options] - See {@link https://docs.tuckn.net/WshOS/global.html#typeOsExecOptions|typeOsExecOptions}.
    * @param {(boolean|undefined)} [options.runsAdmin] - true: as Admin, false: as User
-   * @param {boolean} [options.shell=true] - Wrap with CMD.EXE. @TODO If the option `shell` is `false`, to get stdout. The default in Node.js execFileSync is false.
-   * @param {(number|string)} [options.winStyle='activeDef'] - See {@link https://docs.tuckn.net/WshUtil/Wsh.Constants.windowStyles.html|Wsh.Constants.windowStyles}.
-   * @param {boolean} [options.isDryRun=false] - No execute, returns the string of command.
-   * @returns {typeRunSyncReturn|string} - If options.isDryRun is true, returns string.
+   * @returns {(typeExecSyncReturn|void|number|string)} - A return value varies depending on an options parameter. options.runsAdmin: true => void. options.runsAdmin: false and WSH process is admin => number. options.isDryRun: true => string. When others, returns {@link https://docs.tuckn.net/WshOS/global.html#typeExecSyncReturn|typeExecSyncReturn}.
    */
   child_process.execFileSync = function (file, args, options) {
     var FN = 'child_process.execFileSync';
     if (!isSolidString(file)) throwErrNonStr(FN, file);
-    if (!isSolidArray(args)) args = [];
 
-    return _runSync(
-      file,
-      args,
-      objAdd({ shell: true, winStyle: 'activeDef' }, options)
-    );
+    var op = objAdd({ shell: false }, options);
+
+    var runsAdmin = obtain(options, 'runsAdmin', null);
+    unset(op, 'runsAdmin');
+
+    try {
+      if (runsAdmin === true && !process.isAdmin()) {
+        return os.runAsAdmin(file, args, op);
+      } else if (runsAdmin === false && process.isAdmin()) {
+        return os.Task.runTemporary(file, args, op);
+      } else {
+        return os.execSync(file, args, op);
+      }
+    } catch (e) {
+      throw new Error(insp(e) + '\n'
+        + '  at ' + FN + ' (' + MODULE_TITLE + ')\n'
+        + '  file: "' + file + '"\n  args: ' + insp(args));
+    }
   }; // }}}
 
   // child_process.spawnSync {{{
   /**
-   * Executes the command within CommandPrompt. Similar to {@link https://nodejs.org/api/child_process.html#child_process_child_process_execsync_command_options|Node.js child_process}.
+   * [W.I.P] Executes the command within CommandPrompt. Similar to {@link https://nodejs.org/api/child_process.html#child_process_child_process_execsync_command_options|Node.js child_process}.
    *
    * @function spawnSync
    * @memberof Wsh.ChildProcess

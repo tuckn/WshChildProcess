@@ -32,8 +32,11 @@ var _cb = function (fn/* , args */) {
 describe('ChildProcess', function () {
   var testName;
   var assetsDir = path.join(__dirname, 'assets');
-  var mockWsfCLI = path.join(assetsDir, 'MockCLI.wsf');
-  var mockWsfGUI = path.join(assetsDir, 'MockGUI.wsf');
+  var dirSandbox = path.join(assetsDir, 'Sandbox');
+  var mockWsfCLI = path.join(dirSandbox, 'MockCLI.wsf');
+  var MockCLIArgsCheck = path.join(dirSandbox, 'MockCLIArgsCheck.wsf');
+  var mockWsfGUI = path.join(dirSandbox, 'MockGUI.wsf');
+  var fileStdout = path.join(dirSandbox, 'stdout.txt');
   var testCmd = srrd(CSCRIPT) + ' ' + srrd(__filename) + ' //job:test:ChildProcess';
   var noneStrVals = [true, false, undefined, null, 0, 1, NaN, Infinity, [], {}];
 
@@ -374,7 +377,7 @@ describe('ChildProcess', function () {
     // dry-run
     rtnVal = exec(cmd, { isDryRun: true });
     expect(rtnVal).toContain('[_shRun]: ' + CMD + ' /S /C"' + cmd);
-
+    // Executing
     rtnVal = exec(cmd);
     expect(rtnVal).toBe(CD.runs.ok); // Always 0 (No runsAdmin option)
 
@@ -602,13 +605,14 @@ describe('ChildProcess', function () {
     // dry-run
     rtn = execFileSync(CSCRIPT, args, { isDryRun: true });
     expect(rtn).toContain('dry-run [os.execSync]: ' + CSCRIPT + ' ' + os.joinCmdArgs(args));
-
+    // Executing
     rtn = execFileSync(CSCRIPT, args);
     expect(rtn.exitCode).toBe(0);
     expect(rtn.error).toBe(false);
     expect(rtn.stdout).toBe('StdOut Message');
     expect(rtn.stderr).toBe('');
 
+    // Check getting StdErr
     args = ['//nologo', '//job:withErr', mockWsfCLI];
 
     rtn = execFileSync(CSCRIPT, args);
@@ -616,6 +620,69 @@ describe('ChildProcess', function () {
     expect(rtn.error).toBe(true);
     expect(rtn.stdout).toBe('StdOut Message');
     expect(rtn.stderr).toBe('StdErr Message');
+
+    // Using shell: true option -> Same result
+    rtn = execFileSync(CSCRIPT, args, { shell: true, escapes: true });
+    expect(rtn.exitCode).toBe(1);
+    expect(rtn.error).toBe(true);
+    expect(rtn.stdout).toBe('StdOut Message');
+    expect(rtn.stderr).toBe('StdErr Message');
+  });
+
+  test('execFileSync_exeFile_CLIArgsCheck', function () {
+    noneStrVals.forEach(function (val) {
+      expect(_cb(execFileSync, val)).toThrowError();
+    });
+
+    var execFileSync = child_process.execFileSync;
+    var args, argsStr;
+    var rtn;
+
+    args = [
+      '//nologo',
+      '//job:run',
+      MockCLIArgsCheck,
+      '1',
+      '2 Foo bar',
+      '-p"My p@ss wo^d"',
+      '>',
+      fileStdout
+    ];
+    argsStr = os.joinCmdArgs(args, { escapes: false });
+
+    // dry-run
+    rtn = execFileSync(CSCRIPT, args, { isDryRun: true });
+    expect(rtn).toContain('dry-run [os.execSync]: ' + CSCRIPT + ' ' + argsStr);
+
+    // Remove the stdout file
+    fse.removeSync(fileStdout);
+    expect(fs.existsSync(fileStdout)).toBe(false);
+
+    // Executing
+    rtn = execFileSync(CSCRIPT, args);
+    expect(rtn.exitCode).toBe(1);
+    expect(rtn.error).toBe(false);
+    expect(rtn.stdout).toContain('args[0]:1');
+    expect(rtn.stdout).toContain('args[1]:2 Foo bar');
+    expect(rtn.stdout).toContain('args[2]:-pMy p@ss wo^d'); // WSH remove "
+    expect(rtn.stdout).toContain('args[3]:>');
+    expect(rtn.stdout).toContain('args[4]:' + fileStdout); // Removed "
+    expect(rtn.stderr).toBe('');
+    // Stdout file is not created
+    expect(fs.existsSync(fileStdout)).toBe(false);
+
+    // Using option shell: true
+    rtn = execFileSync(CSCRIPT, args, { shell: true, escapes: true });
+    expect(rtn.exitCode).toBe(1);
+    expect(rtn.error).toBe(false);
+    expect(rtn.stdout).toBe('');
+    expect(rtn.stderr).toBe('');
+    // Stdout file is created
+    expect(fs.existsSync(fileStdout)).toBe(true);
+
+    // Clean
+    fse.removeSync(fileStdout);
+    expect(fs.existsSync(fileStdout)).toBe(false);
   });
 
   test('execFileSync_exeFile_GUI', function () {

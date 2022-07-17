@@ -59,6 +59,7 @@
     "test:name:execFile_exeFile_GUI": ".\\scripts\\Test ChildProcess -t execFile_exeFile_GUI$",
     "test:name:execFile_exeFile_runsAdminTrue": ".\\scripts\\Test ChildProcess -t execFile_exeFile_runsAdminTrue$",
     "test:name:execFileSync_exeFile_CLI": ".\\scripts\\Test ChildProcess -t execFileSync_exeFile_CLI$",
+    "test:name:execFileSync_exeFile_CLIArgsCheck": ".\\scripts\\Test ChildProcess -t execFileSync_exeFile_CLIArgsCheck$",
     "test:name:execFileSync_exeFile_GUI": ".\\scripts\\Test ChildProcess -t execFileSync_exeFile_GUI$",
     "test:name:spawnSync": ".\\scripts\\Test ChildProcess -t spawnSync$",
     "test:name:execFileViaJSON": ".\\scripts\\Test ChildProcess -t execFileViaJSON$",

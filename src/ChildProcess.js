@@ -180,7 +180,7 @@
     var cmdStr = exeObj.mainCmd;
     var args = exeObj.argsStr;
 
-    var op = objAdd({ shell: true, winStyle: 'hidden' }, options);
+    var op = objAdd({ shell: true, escapes: true, winStyle: 'hidden' }, options);
 
     var runsAdmin = obtain(options, 'runsAdmin', null);
     unset(op, 'runsAdmin');
@@ -241,7 +241,7 @@
    * @param {string} command - The executable file path or the command of CMD.
    * @param {object} [options] - See {@link https://docs.tuckn.net/WshOS/global.html#typeShRunOptions|typeShRunOptions}.
    * @param {(boolean|undefined)} [options.runsAdmin] - true: as Admin, false: as User
-   * @returns {(typeExecSyncReturn|string)} - Basecaly returns {@link https://docs.tuckn.net/WshOS/global.html#typeExecSyncReturn|typeExecSyncReturn}..But, option.runsAdmin: true => exitCode is always undefined. options.runsAdmin: false and WSH process is admin => exitCode is always undefined. options.isDryRun: true => string.
+   * @returns {(typeExecSyncReturn|string)} - Basically returns {@link https://docs.tuckn.net/WshOS/global.html#typeExecSyncReturn|typeExecSyncReturn}..But, option.runsAdmin: true => exitCode is always undefined. options.runsAdmin: false and WSH process is admin => exitCode is always undefined. options.isDryRun: true => string.
    */
   child_process.execSync = function (command, options) {
     var FN = 'child_process.execSync';
@@ -251,7 +251,7 @@
     var cmdStr = exeObj.mainCmd;
     var args = exeObj.argsStr;
 
-    var op = objAdd({ shell: true, winStyle: 'hidden' }, options);
+    var op = objAdd({ shell: true, escapes: true, winStyle: 'hidden' }, options);
 
     var runsAdmin = obtain(options, 'runsAdmin', null);
     unset(op, 'runsAdmin');
@@ -342,17 +342,19 @@
    * var execFile = Wsh.ChildProcess.execFile; // Shorthand
    *
    * // Asynchronously run Notepad with active window
-   * execFile('notepad.exe');
-   * execFile('notepad.exe', ['D:\\memo.txt'], { winStyle: 'activeMax' });
+   * var rtn = execFile('notepad.exe', ['D:\\memo.txt']);
+   * // Get the process info
+   * var sWbemObjSet = wmi.getProcess(rtn.ProcessID);
+   * ...
+   * rtn.Terminate(); // Exit the GUI process
    *
    * // Arguments will be parsed
    * // 'mY& p@ss>_<' to '"mY^& p@ss^>_^<"'
    * execFile('net.exe',
-   *   ['use', '\\\\CompName\\IPC$', 'mY& p@ss>_<', '/user:Tuckn'],
-   *   { winStyle: 'hidden' }
+   *   ['use', '\\\\CompName\\IPC$', 'mY& p@ss>_<', '/user:Tuckn']
    * );
    *
-   * // A DOS command
+   * // To execute the DOS command, you need option shell: true.
    * execFile('mkdir', ['C:\\Tuckn\\test']); // Error
    * execFile('mkdir', ['C:\\Tuckn\\test'], { shell: true }); // OK!
    *
@@ -367,7 +369,6 @@
    * @param {(string[]|string)} [args] - The arguments.
    * @param {typeOsExecOptions} [options] - See {@link https://docs.tuckn.net/WshOS/global.html#typeOsExecOptions|typeOsExecOptions}.
    * @param {(boolean|undefined)} [options.runsAdmin] - true: as Admin, false: as User
-   * @param {(number|string)} [options.winStyle='activeDef'] - See {@link https://docs.tuckn.net/WshUtil/Wsh.Constants.windowStyles.html|Wsh.Constants.windowStyles}.
    * @param {boolean} [options.shell=false] - Wrap with CMD.EXE
    * @param {boolean} [options.isDryRun=false] - No execute, returns the string of command.
    * @returns {(typeExecObject|number|void|string)} - A return value varies depending on an options parameter. options.runsAdmin: true => void. options.runsAdmin: false and WSH process is admin => number. options.isDryRun: true => string. When others, returns {@link https://docs.tuckn.net/WshOS/global.html#typeExecObject|typeExecObject}.
@@ -376,7 +377,7 @@
     var FN = 'child_process.execFile';
     if (!isSolidString(file)) throwErrNonStr(FN, file);
 
-    var op = objAdd({ shell: false }, options);
+    var op = objAdd({ shell: false, escapes: false }, options);
 
     var runsAdmin = obtain(options, 'runsAdmin', null);
     unset(op, 'runsAdmin');
@@ -439,7 +440,7 @@
     var FN = 'child_process.execFileSync';
     if (!isSolidString(file)) throwErrNonStr(FN, file);
 
-    var op = objAdd({ shell: false }, options);
+    var op = objAdd({ shell: false, escapes: false }, options);
 
     var runsAdmin = obtain(options, 'runsAdmin', null);
     unset(op, 'runsAdmin');

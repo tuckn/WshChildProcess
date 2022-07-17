@@ -106,7 +106,7 @@ splitCommand('mklink /D "filePath2" filePath1');
 
 ### exec
 
-Use Case: DOS commands or CUI applications that do not require processing results.
+Use Case: Run a DOS command or CUI application asynchronously. And when you don't require the processing results.
 
 ```js
 var exec = Wsh.ChildProcess.exec; // Shorthand
@@ -117,12 +117,14 @@ exec('mkdir C:\\My Apps\\test'); // NG
 exec('mkdir "C:\\My Apps\\test"'); // OK
 
 // Asynchronously create the symbolic-link in D:\Temp
-exec('mklink D:\\Temp\\hoge-Symlink "C:\\My Foo\\hoge"', { runsAdmin: true });
+exec('mklink D:\\Temp\\hoge-Symlink "C:\\My Foo\\hoge"', {
+  runsAdmin: true
+});
 ```
 
 ### execSync
 
-Use Case: DOS commands or CUI applications that require processing results.
+Use Case: Run a DOS command or CUI application synchronously. And when you want to receive the processing results.
 
 ```js
 var execSync = Wsh.ChildProcess.execSync; // Shorthand
@@ -147,31 +149,36 @@ console.dir(retObj);
 //   stderr: "" }
 ```
 
+Tip: execSync can get StdOut of the administrator privileges process by using options, `runsAdmin: true` and `shell: true`.
+
 ### execFile
 
-Use Case: Applications that do not require processing results.
+Use Case: Run a GUI application asynchronously, or you want to control the application later with [WshOS.typeExecObject](https://docs.tuckn.net/WshOS/global.html#typeExecObject) or ProcessID.
 
 ```js
 var execFile = Wsh.ChildProcess.execFile; // Shorthand
 
-// Asynchronously run Notepad with active window
-execFile('notepad.exe');
-execFile('notepad.exe', ['D:\\memo.txt']);
-
-// Auto parse arg
+// Asynchronously run. The arguments are escaped automatically.
 execFile('net.exe',
   ['use', '\\\\CompName\\My Dir', 'mY&p@ss>_<', '/user:Tuckn']
 );
-// parsed the args to 'use "\\\\CompName\\My Dir" mY^&p@ss^>_^< /user:Tuckn'
+// Converted this args to 'use "\\\\CompName\\My Dir" mY^&p@ss^>_^< /user:Tuckn'
 
-// DOS commands
+// Asynchronously run Notepad with active window
+var rtn = execFile('notepad.exe', ['D:\\memo.txt']);
+// Get the process info
+var sWbemObjSet = wmi.getProcess(rtn.ProcessID);
+...
+rtn.Terminate(); // Exit the GUI process
+
+// To execute the DOS command, you need option shell: true.
 execFile('mkdir', ['C:\\Tuckn\\test']); // Error
 execFile('mkdir', ['C:\\Tuckn\\test'], { shell: true }); // OK!
 ```
 
 ### execFileSync
 
-Use Case: Applications that require processing results.
+Use Case: Run a CUI application synchronously and when you want to receive the exit code and the processing stdout.
 
 ```js
 var execFileSync = Wsh.ChildProcess.execFileSync; // Shorthand
@@ -186,15 +193,15 @@ console.dir(retObj);
 //   stdout: "....",
 //   stderr: "" }
 
-execFileSync('C:\\Program Files\\IrfanView\\i_view64.exe', ['C:\\result.png']);
 // Run IrfanView with active window.
-// and this JS process is stopping until you close the window.
-console.log('Closed the window of IrfanView');
+var retObj = execFileSync('7z.exe', ['u', '-tzip', 'my.zip', 'D:\\My data']);
+// and this WSH process is stopping until you close the window.
+if (retObj.exitCode === 0) { ... }
 ```
 
 ### Option dry-run
 
-No execute, returns the string of command.
+No executes, returns the string of command.
 
 ```js
 var execFileSync = Wsh.ChildProcess.execFileSync; // Shorthand

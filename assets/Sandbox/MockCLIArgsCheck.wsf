@@ -1,0 +1,10 @@
+﻿<package>
+  <job id = "run">
+    <script language="JScript">
+for (var i = 0, I = WScript.Arguments.length; i < I; i++) {
+  WScript.Echo('args[' + i + ']:' + String(WScript.Arguments(i)) + ',');
+}
+WScript.Quit(1);
+    </script>
+  </job>
+</package>

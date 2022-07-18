@@ -131,7 +131,7 @@
 
   // child_process.exec {{{
   /**
-   * Asynchronously executes the command within CommandPrompt. Similar to {@link https://nodejs.org/api/child_process.html#child_process_child_process_exec_command_options_callback|Node.js child_process.exec()}. The function to be executed is one of os.run, os.runAsAdmin and os.Task.runTemporary.
+   * Asynchronously executes the command within CommandPrompt. Similar to {@link https://nodejs.org/api/child_process.html#child_process_child_process_exec_command_options_callback|Node.js child_process.exec()}. The function to be executed is one of os.shRun, os.runAsAdmin and os.Task.runTemporary.
    *
    * @example
    * // Use Case: DOS commands or CUI applications that do not require processing results
@@ -170,7 +170,7 @@
    * @param {string} command - The executable file path or the command of CMD.
    * @param {object} [options] - See {@link https://docs.tuckn.net/WshOS/global.html#typeShRunOptions|typeShRunOptions}.
    * @param {(boolean|undefined)} [options.runsAdmin] - true: as Admin, false: as User
-   * @returns {(void|number|string)} - A return value varies depending on an options parameter. options.runsAdmin: true => void. options.runsAdmin: false and WSH process is admin => number. options.isDryRun: true => string. When others, returns 0.
+   * @returns {(0|void|string)} - A return value varies depending on an options parameter. options.runsAdmin: true or false and WSH process is admin => undefined. options.isDryRun: true => string. When others, returns 0.
    */
   child_process.exec = function (command, options) {
     var FN = 'child_process.exec';
@@ -191,7 +191,7 @@
       } else if (runsAdmin === false && process.isAdmin()) {
         return os.Task.runTemporary(cmdStr, args, op);
       } else {
-        return os.run(cmdStr, args, op);
+        return os.shRun(cmdStr, args, op);
       }
     } catch (e) {
       throw new Error(insp(e) + '\n'
@@ -241,7 +241,7 @@
    * @param {string} command - The executable file path or the command of CMD.
    * @param {object} [options] - See {@link https://docs.tuckn.net/WshOS/global.html#typeShRunOptions|typeShRunOptions}.
    * @param {(boolean|undefined)} [options.runsAdmin] - true: as Admin, false: as User
-   * @returns {(typeExecSyncReturn|string)} - Basically returns {@link https://docs.tuckn.net/WshOS/global.html#typeExecSyncReturn|typeExecSyncReturn}..But, option.runsAdmin: true => exitCode is always undefined. options.runsAdmin: false and WSH process is admin => exitCode is always undefined. options.isDryRun: true => string.
+   * @returns {(typeExecSyncReturn|string)} - Basically returns {@link https://docs.tuckn.net/WshOS/global.html#typeExecSyncReturn|typeExecSyncReturn}. But, option.runsAdmin: true or false and WSH process is admin => exitCode is always undefined. options.isDryRun: true => string.
    */
   child_process.execSync = function (command, options) {
     var FN = 'child_process.execSync';
@@ -283,7 +283,7 @@
       } else if (runsAdmin === false && process.isAdmin()) {
         retVal = os.Task.runTemporary(cmdStr, stdioArgs, op);
       } else {
-        retVal = os.runSync(cmdStr, stdioArgs, op);
+        retVal = os.shRunSync(cmdStr, stdioArgs, op);
       }
 
       var isDryRun = obtain(options, 'isDryRun', false);
@@ -388,7 +388,7 @@
       } else if (runsAdmin === false && process.isAdmin()) {
         return os.Task.runTemporary(file, args, op);
       } else {
-        return os.exec(file, args, op);
+        return os.shExec(file, args, op);
       }
     } catch (e) {
       throw new Error(insp(e) + '\n'
@@ -434,7 +434,7 @@
    * @param {(string[]|string)} [args] - The arguments.
    * @param {typeOsExecOptions} [options] - See {@link https://docs.tuckn.net/WshOS/global.html#typeOsExecOptions|typeOsExecOptions}.
    * @param {(boolean|undefined)} [options.runsAdmin] - true: as Admin, false: as User
-   * @returns {(typeExecSyncReturn|void|number|string)} - A return value varies depending on an options parameter. options.runsAdmin: true => void. options.runsAdmin: false and WSH process is admin => number. options.isDryRun: true => string. When others, returns {@link https://docs.tuckn.net/WshOS/global.html#typeExecSyncReturn|typeExecSyncReturn}.
+   * @returns {(typeExecSyncReturn|void|string)} - A return value varies depending on an options parameter. options.runsAdmin: true or false and WSH process is admin => returns undefined. options.isDryRun: true => string. When others, returns {@link https://docs.tuckn.net/WshOS/global.html#typeExecSyncReturn|typeExecSyncReturn}.
    */
   child_process.execFileSync = function (file, args, options) {
     var FN = 'child_process.execFileSync';
@@ -451,7 +451,7 @@
       } else if (runsAdmin === false && process.isAdmin()) {
         return os.Task.runTemporary(file, args, op);
       } else {
-        return os.execSync(file, args, op);
+        return os.shExecSync(file, args, op);
       }
     } catch (e) {
       throw new Error(insp(e) + '\n'
@@ -480,7 +480,7 @@
     var exeObj = child_process.splitCommand(command);
 
     try {
-      return os.execSync(
+      return os.shExecSync(
         exeObj.mainCmd,
         exeObj.argsStr,
         objAdd({ shell: false }, options)

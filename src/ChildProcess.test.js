@@ -455,14 +455,14 @@ describe('ChildProcess', function () {
     // Non shell option
     // dry-run
     rtn = execFile('mkdir', [tmpDir], { isDryRun: true });
-    expect(rtn).toContain('[os.exec]: mkdir ' + tmpDir);
+    expect(rtn).toContain('[os.shExec]: mkdir ' + tmpDir);
     // Executing -> Fail, because mkdir is CMD command
     expect(_cb(execFile, 'mkdir', [tmpDir])).toThrowError();
 
     // With shell options
     // dry-run
     rtn = execFile('mkdir', [tmpDir], { shell: true, isDryRun: true });
-    expect(rtn).toContain('[os.exec]: ' + CMD + ' /S /C"mkdir ' + tmpDir);
+    expect(rtn).toContain('[os.shExec]: ' + CMD + ' /S /C"mkdir ' + tmpDir);
     expect(fs.existsSync(tmpDir)).toBe(false);
     // Executing
     rtn = execFile('mkdir', [tmpDir], { shell: true });
@@ -486,7 +486,7 @@ describe('ChildProcess', function () {
 
     // dry-run
     rtn = execFile(CSCRIPT, args, { isDryRun: true });
-    expect(rtn).toContain('[os.exec]: ' + CSCRIPT + ' ' + os.joinCmdArgs(args));
+    expect(rtn).toContain('[os.shExec]: ' + CSCRIPT + ' ' + os.joinCmdArgs(args));
     // Executing
     rtn = execFile(CSCRIPT, args);
     expect(rtn.ExitCode).toBe(CD.runs.ok); // Always 0 (Async)
@@ -604,7 +604,7 @@ describe('ChildProcess', function () {
 
     // dry-run
     rtn = execFileSync(CSCRIPT, args, { isDryRun: true });
-    expect(rtn).toContain('dry-run [os.execSync]: ' + CSCRIPT + ' ' + os.joinCmdArgs(args));
+    expect(rtn).toContain('dry-run [os.shExecSync]: ' + CSCRIPT + ' ' + os.joinCmdArgs(args));
     // Executing
     rtn = execFileSync(CSCRIPT, args);
     expect(rtn.exitCode).toBe(0);
@@ -652,7 +652,7 @@ describe('ChildProcess', function () {
 
     // dry-run
     rtn = execFileSync(CSCRIPT, args, { isDryRun: true });
-    expect(rtn).toContain('dry-run [os.execSync]: ' + CSCRIPT + ' ' + argsStr);
+    expect(rtn).toContain('dry-run [os.shExecSync]: ' + CSCRIPT + ' ' + argsStr);
 
     // Remove the stdout file
     fse.removeSync(fileStdout);
@@ -698,7 +698,7 @@ describe('ChildProcess', function () {
 
     // dry-run
     rtn = execFileSync(CSCRIPT, args, { isDryRun: true });
-    expect(rtn).toContain('dry-run [os.execSync]: ' + CSCRIPT + ' ' + os.joinCmdArgs(args));
+    expect(rtn).toContain('dry-run [os.shExecSync]: ' + CSCRIPT + ' ' + os.joinCmdArgs(args));
 
     rtn = execFileSync(CSCRIPT, args);
     expect(rtn.exitCode).toBe(0);

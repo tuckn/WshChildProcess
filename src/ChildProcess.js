@@ -168,7 +168,7 @@
    * @function exec
    * @memberof Wsh.ChildProcess
    * @param {string} command - The executable file path or the command of CMD.
-   * @param {object} [options] - See {@link https://docs.tuckn.net/WshOS/global.html#typeShRunOptions|typeShRunOptions}.
+   * @param {object} [options] - See {@link https://tuckn.net/docs/WshOS/global.html#typeShRunOptions|typeShRunOptions}.
    * @param {(boolean|undefined)} [options.runsAdmin] - true: as Admin, false: as User
    * @returns {(0|void|string)} - A return value varies depending on an options parameter. options.runsAdmin: true or false and WSH process is admin => undefined. options.isDryRun: true => string. When others, returns 0.
    */
@@ -239,9 +239,9 @@
    * @function execSync
    * @memberof Wsh.ChildProcess
    * @param {string} command - The executable file path or the command of CMD.
-   * @param {object} [options] - See {@link https://docs.tuckn.net/WshOS/global.html#typeShRunOptions|typeShRunOptions}.
+   * @param {object} [options] - See {@link https://tuckn.net/docs/WshOS/global.html#typeShRunOptions|typeShRunOptions}.
    * @param {(boolean|undefined)} [options.runsAdmin] - true: as Admin, false: as User
-   * @returns {(typeExecSyncReturn|string)} - Basically returns {@link https://docs.tuckn.net/WshOS/global.html#typeExecSyncReturn|typeExecSyncReturn}. But, option.runsAdmin: true or false and WSH process is admin => exitCode is always undefined. options.isDryRun: true => string.
+   * @returns {(typeExecSyncReturn|string)} - Basically returns {@link https://tuckn.net/docs/WshOS/global.html#typeExecSyncReturn|typeExecSyncReturn}. But, option.runsAdmin: true or false and WSH process is admin => exitCode is always undefined. options.isDryRun: true => string.
    */
   child_process.execSync = function (command, options) {
     var FN = 'child_process.execSync';
@@ -367,11 +367,11 @@
    * @memberof Wsh.ChildProcess
    * @param {string} file - The executable file path or the command of CMD.
    * @param {(string[]|string)} [args] - The arguments.
-   * @param {typeOsExecOptions} [options] - See {@link https://docs.tuckn.net/WshOS/global.html#typeOsExecOptions|typeOsExecOptions}.
+   * @param {typeOsExecOptions} [options] - See {@link https://tuckn.net/docs/WshOS/global.html#typeOsExecOptions|typeOsExecOptions}.
    * @param {(boolean|undefined)} [options.runsAdmin] - true: as Admin, false: as User
    * @param {boolean} [options.shell=false] - Wrap with CMD.EXE
    * @param {boolean} [options.isDryRun=false] - No execute, returns the string of command.
-   * @returns {(typeExecObject|number|void|string)} - A return value varies depending on an options parameter. options.runsAdmin: true => void. options.runsAdmin: false and WSH process is admin => number. options.isDryRun: true => string. When others, returns {@link https://docs.tuckn.net/WshOS/global.html#typeExecObject|typeExecObject}.
+   * @returns {(typeExecObject|number|void|string)} - A return value varies depending on an options parameter. options.runsAdmin: true => void. options.runsAdmin: false and WSH process is admin => number. options.isDryRun: true => string. When others, returns {@link https://tuckn.net/docs/WshOS/global.html#typeExecObject|typeExecObject}.
    */
   child_process.execFile = function (file, args, options) {
     var FN = 'child_process.execFile';
@@ -432,9 +432,9 @@
    * @memberof Wsh.ChildProcess
    * @param {string} file - The executable file path or the command of CMD.
    * @param {(string[]|string)} [args] - The arguments.
-   * @param {typeOsExecOptions} [options] - See {@link https://docs.tuckn.net/WshOS/global.html#typeOsExecOptions|typeOsExecOptions}.
+   * @param {typeOsExecOptions} [options] - See {@link https://tuckn.net/docs/WshOS/global.html#typeOsExecOptions|typeOsExecOptions}.
    * @param {(boolean|undefined)} [options.runsAdmin] - true: as Admin, false: as User
-   * @returns {(typeExecSyncReturn|void|string)} - A return value varies depending on an options parameter. options.runsAdmin: true or false and WSH process is admin => returns undefined. options.isDryRun: true => string. When others, returns {@link https://docs.tuckn.net/WshOS/global.html#typeExecSyncReturn|typeExecSyncReturn}.
+   * @returns {(typeExecSyncReturn|void|string)} - A return value varies depending on an options parameter. options.runsAdmin: true or false and WSH process is admin => returns undefined. options.isDryRun: true => string. When others, returns {@link https://tuckn.net/docs/WshOS/global.html#typeExecSyncReturn|typeExecSyncReturn}.
    */
   child_process.execFileSync = function (file, args, options) {
     var FN = 'child_process.execFileSync';
@@ -470,7 +470,7 @@
    * @param {object} [options] - Optional parameters.
    * @param {(boolean|undefined)} [options.runsAdmin] - true: as Admin, false: as User
    * @param {boolean} [options.shell=false] - Wrap with CMD.EXE
-   * @param {(number|string)} [options.winStyle='hidden'] - See {@link https://docs.tuckn.net/WshUtil/Wsh.Constants.windowStyles.html|Wsh.Constants.windowStyles}.
+   * @param {(number|string)} [options.winStyle='hidden'] - See {@link https://tuckn.net/docs/WshUtil/Wsh.Constants.windowStyles.html|Wsh.Constants.windowStyles}.
    * @returns {typeExecSyncReturn}
    */
   child_process.spawnSync = function (command, options) {
@@ -518,7 +518,7 @@
    * @function execFileViaJSON
    * @memberof Wsh.ChildProcess
    * @param {string} jsonPath - The JSON filepath
-   * @param {object} [options] - See {@link https://docs.tuckn.net/WshFileSystem/Wsh.FileSystemExtra.html#.readJsonSync|Wsh.FileSystemExtra.readJsonSync}
+   * @param {object} [options] - See {@link https://tuckn.net/docs/WshFileSystem/Wsh.FileSystemExtra.html#.readJsonSync|Wsh.FileSystemExtra.readJsonSync}
    * @returns {void}
    */
   child_process.execFileViaJSON = function (jsonPath, options) {
